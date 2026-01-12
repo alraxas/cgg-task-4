@@ -1,0 +1,331 @@
+package Math;
+
+/**
+ * Класс для представления камеры с улучшенным управлением
+ * Поддерживает управление клавиатурой и мышью
+ */
+public class Camera {
+    private Vector3 position;      // Позиция камеры
+    private Vector3 target;         // Точка, на которую смотрит камера
+    private Vector3 up;              // Вектор "вверх" для камеры
+    
+    // Углы для сферических координат (для управления мышью)
+    private double yaw;              // Угол поворота вокруг оси Y (в радианах)
+    private double pitch;            // Угол наклона вверх/вниз (в радианах)
+    private double distance;         // Расстояние от камеры до цели
+    
+    // Параметры управления
+    private double moveSpeed;        // Скорость движения камеры
+    private double rotationSpeed;    // Скорость вращения камеры
+    private double mouseSensitivity; // Чувствительность мыши
+    
+    // Ограничения углов
+    private static final double MAX_PITCH = Math.PI / 2 - 0.1; // Почти 90 градусов
+    private static final double MIN_PITCH = -Math.PI / 2 + 0.1; // Почти -90 градусов
+
+    /**
+     * Создает камеру с начальными параметрами
+     */
+    public Camera() {
+        this.position = new Vector3(0.0, 0.0, 5.0);
+        this.target = new Vector3(0.0, 0.0, 0.0);
+        this.up = new Vector3(0.0, 1.0, 0.0);
+        
+        this.yaw = 0.0;
+        this.pitch = 0.0;
+        this.distance = 5.0;
+        
+        this.moveSpeed = 0.1;
+        this.rotationSpeed = 0.01;
+        this.mouseSensitivity = 0.005;
+        
+        updatePositionFromAngles();
+    }
+
+    /**
+     * Создает камеру с заданными параметрами
+     */
+    public Camera(Vector3 position, Vector3 target, Vector3 up) {
+        this.position = position != null ? position : new Vector3(0.0, 0.0, 5.0);
+        this.target = target != null ? target : new Vector3(0.0, 0.0, 0.0);
+        this.up = up != null ? up.normalize() : new Vector3(0.0, 1.0, 0.0);
+        
+        this.yaw = 0.0;
+        this.pitch = 0.0;
+        this.distance = position.subtract(target).length();
+        
+        this.moveSpeed = 0.1;
+        this.rotationSpeed = 0.01;
+        this.mouseSensitivity = 0.005;
+        
+        updateAnglesFromPosition();
+    }
+
+    /**
+     * Возвращает матрицу вида (view matrix) для векторов-столбцов
+     * @return матрица вида
+     */
+    public Matrix4 getViewMatrix() {
+        // Вычисляем векторы камеры
+        Vector3 forward = target.subtract(position).normalize();
+        Vector3 right = forward.multiplyVectorVector(up).normalize();
+        Vector3 cameraUp = right.multiplyVectorVector(forward).normalize();
+        
+        // Создаем матрицу вида (look-at matrix) для векторов-столбцов
+        // Матрица вида: [right.x  right.y  right.z  -dot(right,pos)]
+        //               [up.x    up.y    up.z    -dot(up,pos)]
+        //               [-forward.x -forward.y -forward.z dot(forward,pos)]
+        //               [0       0       0       1]
+        Matrix4 view = new Matrix4();
+        
+        view.set(0, 0, right.getX());
+        view.set(0, 1, right.getY());
+        view.set(0, 2, right.getZ());
+        view.set(0, 3, -right.multiplyVectorScalar(position));
+        
+        view.set(1, 0, cameraUp.getX());
+        view.set(1, 1, cameraUp.getY());
+        view.set(1, 2, cameraUp.getZ());
+        view.set(1, 3, -cameraUp.multiplyVectorScalar(position));
+        
+        view.set(2, 0, -forward.getX());
+        view.set(2, 1, -forward.getY());
+        view.set(2, 2, -forward.getZ());
+        view.set(2, 3, forward.multiplyVectorScalar(position));
+        
+        view.set(3, 0, 0.0);
+        view.set(3, 1, 0.0);
+        view.set(3, 2, 0.0);
+        view.set(3, 3, 1.0);
+        
+        return view;
+    }
+
+    /**
+     * Обновляет позицию камеры на основе углов (для управления мышью)
+     */
+    private void updatePositionFromAngles() {
+        double x = target.getX() + distance * Math.cos(pitch) * Math.sin(yaw);
+        double y = target.getY() + distance * Math.sin(pitch);
+        double z = target.getZ() + distance * Math.cos(pitch) * Math.cos(yaw);
+        this.position = new Vector3(x, y, z);
+    }
+
+    /**
+     * Обновляет углы на основе позиции камеры
+     */
+    private void updateAnglesFromPosition() {
+        Vector3 direction = position.subtract(target);
+        this.distance = direction.length();
+        
+        if (distance < 1e-9) {
+            return;
+        }
+        
+        this.pitch = Math.asin(direction.getY() / distance);
+        this.yaw = Math.atan2(direction.getX(), direction.getZ());
+    }
+
+    // Управление клавиатурой
+
+    /**
+     * Движение камеры вперед
+     */
+    public void moveForward() {
+        Vector3 direction = target.subtract(position).normalize();
+        position = position.add(direction.multiply(moveSpeed));
+        target = target.add(direction.multiply(moveSpeed));
+    }
+
+    /**
+     * Движение камеры назад
+     */
+    public void moveBackward() {
+        Vector3 direction = position.subtract(target).normalize();
+        position = position.add(direction.multiply(moveSpeed));
+        target = target.add(direction.multiply(moveSpeed));
+    }
+
+    /**
+     * Движение камеры влево
+     */
+    public void moveLeft() {
+        Vector3 forward = target.subtract(position).normalize();
+        Vector3 right = forward.multiplyVectorVector(up).normalize();
+        Vector3 left = right.multiply(-1.0);
+        position = position.add(left.multiply(moveSpeed));
+        target = target.add(left.multiply(moveSpeed));
+    }
+
+    /**
+     * Движение камеры вправо
+     */
+    public void moveRight() {
+        Vector3 forward = target.subtract(position).normalize();
+        Vector3 right = forward.multiplyVectorVector(up).normalize();
+        position = position.add(right.multiply(moveSpeed));
+        target = target.add(right.multiply(moveSpeed));
+    }
+
+    /**
+     * Движение камеры вверх
+     */
+    public void moveUp() {
+        position = position.add(up.multiply(moveSpeed));
+        target = target.add(up.multiply(moveSpeed));
+    }
+
+    /**
+     * Движение камеры вниз
+     */
+    public void moveDown() {
+        position = position.add(up.multiply(-moveSpeed));
+        target = target.add(up.multiply(-moveSpeed));
+    }
+
+    /**
+     * Вращение камеры влево
+     */
+    public void rotateLeft() {
+        yaw -= rotationSpeed;
+        updatePositionFromAngles();
+    }
+
+    /**
+     * Вращение камеры вправо
+     */
+    public void rotateRight() {
+        yaw += rotationSpeed;
+        updatePositionFromAngles();
+    }
+
+    /**
+     * Вращение камеры вверх
+     */
+    public void rotateUp() {
+        pitch += rotationSpeed;
+        if (pitch > MAX_PITCH) {
+            pitch = MAX_PITCH;
+        }
+        updatePositionFromAngles();
+    }
+
+    /**
+     * Вращение камеры вниз
+     */
+    public void rotateDown() {
+        pitch -= rotationSpeed;
+        if (pitch < MIN_PITCH) {
+            pitch = MIN_PITCH;
+        }
+        updatePositionFromAngles();
+    }
+
+    // Управление мышью
+
+    /**
+     * Обработка движения мыши для вращения камеры
+     * @param deltaX изменение по оси X (в пикселях)
+     * @param deltaY изменение по оси Y (в пикселях)
+     */
+    public void processMouseMovement(double deltaX, double deltaY) {
+        yaw += deltaX * mouseSensitivity;
+        pitch -= deltaY * mouseSensitivity;
+        
+        // Ограничиваем угол наклона
+        if (pitch > MAX_PITCH) {
+            pitch = MAX_PITCH;
+        }
+        if (pitch < MIN_PITCH) {
+            pitch = MIN_PITCH;
+        }
+        
+        updatePositionFromAngles();
+    }
+
+    /**
+     * Обработка прокрутки колесика мыши для приближения/отдаления
+     * @param delta изменение прокрутки
+     */
+    public void processMouseScroll(double delta) {
+        distance += delta * 0.1;
+        if (distance < 0.1) {
+            distance = 0.1;
+        }
+        updatePositionFromAngles();
+    }
+
+    // Геттеры и сеттеры
+
+    public Vector3 getPosition() {
+        return position;
+    }
+
+    public void setPosition(Vector3 position) {
+        if (position == null) {
+            throw new IllegalArgumentException("Позиция не может быть null");
+        }
+        this.position = position;
+        updateAnglesFromPosition();
+    }
+
+    public Vector3 getTarget() {
+        return target;
+    }
+
+    public void setTarget(Vector3 target) {
+        if (target == null) {
+            throw new IllegalArgumentException("Цель не может быть null");
+        }
+        this.target = target;
+        updateAnglesFromPosition();
+    }
+
+    public Vector3 getUp() {
+        return up;
+    }
+
+    public void setUp(Vector3 up) {
+        if (up == null) {
+            throw new IllegalArgumentException("Вектор 'вверх' не может быть null");
+        }
+        this.up = up.normalize();
+    }
+
+    public double getMoveSpeed() {
+        return moveSpeed;
+    }
+
+    public void setMoveSpeed(double moveSpeed) {
+        this.moveSpeed = moveSpeed;
+    }
+
+    public double getRotationSpeed() {
+        return rotationSpeed;
+    }
+
+    public void setRotationSpeed(double rotationSpeed) {
+        this.rotationSpeed = rotationSpeed;
+    }
+
+    public double getMouseSensitivity() {
+        return mouseSensitivity;
+    }
+
+    public void setMouseSensitivity(double mouseSensitivity) {
+        this.mouseSensitivity = mouseSensitivity;
+    }
+
+    public double getYaw() {
+        return yaw;
+    }
+
+    public double getPitch() {
+        return pitch;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+}
+
