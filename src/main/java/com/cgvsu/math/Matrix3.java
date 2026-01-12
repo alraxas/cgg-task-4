@@ -1,4 +1,4 @@
-package Math;
+package com.cgvsu.math;
 
 public class Matrix3 {
     private double[][] data;
@@ -68,14 +68,14 @@ public class Matrix3 {
         return result;
     }
 
-    public Vector3 multiplyVector(Vector3 vector) {
+    public Vector3f multiplyVector(Vector3f vector) {
         if (vector == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
         }
         double x = data[0][0] * vector.getX() + data[0][1] * vector.getY() + data[0][2] * vector.getZ();
         double y = data[1][0] * vector.getX() + data[1][1] * vector.getY() + data[1][2] * vector.getZ();
         double z = data[2][0] * vector.getX() + data[2][1] * vector.getY() + data[2][2] * vector.getZ();
-        return new Vector3(x, y, z);
+        return new Vector3f(x, y, z);
     }
 
     public Matrix3 multiplyMatrix(Matrix3 other) {

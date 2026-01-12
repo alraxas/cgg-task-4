@@ -1,21 +1,21 @@
-package Math;
+package com.cgvsu.math;
 
 /**
  * Класс для представления аффинных преобразований модели
  * Поддерживает масштабирование, вращение и перенос
  */
 public class Transform {
-    private Vector3 position;      // Позиция (перенос)
-    private Vector3 rotation;        // Углы вращения вокруг осей X, Y, Z (в радианах)
-    private Vector3 scale;          // Масштабирование по осям X, Y, Z
+    private Vector3f position;      // Позиция (перенос)
+    private Vector3f rotation;        // Углы вращения вокруг осей X, Y, Z (в радианах)
+    private Vector3f scale;          // Масштабирование по осям X, Y, Z
 
     /**
      * Создает трансформацию с начальными значениями
      */
     public Transform() {
-        this.position = new Vector3(0.0, 0.0, 0.0);
-        this.rotation = new Vector3(0.0, 0.0, 0.0);
-        this.scale = new Vector3(1.0, 1.0, 1.0);
+        this.position = new Vector3f(0.0, 0.0, 0.0);
+        this.rotation = new Vector3f(0.0, 0.0, 0.0);
+        this.scale = new Vector3f(1.0, 1.0, 1.0);
     }
 
     /**
@@ -24,10 +24,10 @@ public class Transform {
      * @param rotation углы вращения в радианах
      * @param scale масштабирование
      */
-    public Transform(Vector3 position, Vector3 rotation, Vector3 scale) {
-        this.position = position != null ? position : new Vector3(0.0, 0.0, 0.0);
-        this.rotation = rotation != null ? rotation : new Vector3(0.0, 0.0, 0.0);
-        this.scale = scale != null ? scale : new Vector3(1.0, 1.0, 1.0);
+    public Transform(Vector3f position, Vector3f rotation, Vector3f scale) {
+        this.position = position != null ? position : new Vector3f(0.0, 0.0, 0.0);
+        this.rotation = rotation != null ? rotation : new Vector3f(0.0, 0.0, 0.0);
+        this.scale = scale != null ? scale : new Vector3f(1.0, 1.0, 1.0);
     }
 
     /**
@@ -71,7 +71,7 @@ public class Transform {
      * @param point точка в локальных координатах
      * @return точка в мировых координатах
      */
-    public Vector3 transformPoint(Vector3 point) {
+    public Vector3f transformPoint(Vector3f point) {
         if (point == null) {
             throw new IllegalArgumentException("Точка не может быть null");
         }
@@ -81,11 +81,11 @@ public class Transform {
 
     // Геттеры и сеттеры
 
-    public Vector3 getPosition() {
+    public Vector3f getPosition() {
         return position;
     }
 
-    public void setPosition(Vector3 position) {
+    public void setPosition(Vector3f position) {
         if (position == null) {
             throw new IllegalArgumentException("Позиция не может быть null");
         }
@@ -93,14 +93,14 @@ public class Transform {
     }
 
     public void setPosition(double x, double y, double z) {
-        this.position = new Vector3(x, y, z);
+        this.position = new Vector3f(x, y, z);
     }
 
-    public Vector3 getRotation() {
+    public Vector3f getRotation() {
         return rotation;
     }
 
-    public void setRotation(Vector3 rotation) {
+    public void setRotation(Vector3f rotation) {
         if (rotation == null) {
             throw new IllegalArgumentException("Вращение не может быть null");
         }
@@ -108,14 +108,14 @@ public class Transform {
     }
 
     public void setRotation(double x, double y, double z) {
-        this.rotation = new Vector3(x, y, z);
+        this.rotation = new Vector3f(x, y, z);
     }
 
-    public Vector3 getScale() {
+    public Vector3f getScale() {
         return scale;
     }
 
-    public void setScale(Vector3 scale) {
+    public void setScale(Vector3f scale) {
         if (scale == null) {
             throw new IllegalArgumentException("Масштаб не может быть null");
         }
@@ -123,20 +123,20 @@ public class Transform {
     }
 
     public void setScale(double x, double y, double z) {
-        this.scale = new Vector3(x, y, z);
+        this.scale = new Vector3f(x, y, z);
     }
 
     public void setScale(double uniformScale) {
-        this.scale = new Vector3(uniformScale, uniformScale, uniformScale);
+        this.scale = new Vector3f(uniformScale, uniformScale, uniformScale);
     }
 
     /**
      * Сбрасывает трансформацию к начальным значениям
      */
     public void reset() {
-        this.position = new Vector3(0.0, 0.0, 0.0);
-        this.rotation = new Vector3(0.0, 0.0, 0.0);
-        this.scale = new Vector3(1.0, 1.0, 1.0);
+        this.position = new Vector3f(0.0, 0.0, 0.0);
+        this.rotation = new Vector3f(0.0, 0.0, 0.0);
+        this.scale = new Vector3f(1.0, 1.0, 1.0);
     }
 
     /**
@@ -145,9 +145,9 @@ public class Transform {
      */
     public Transform copy() {
         return new Transform(
-            new Vector3(position.getX(), position.getY(), position.getZ()),
-            new Vector3(rotation.getX(), rotation.getY(), rotation.getZ()),
-            new Vector3(scale.getX(), scale.getY(), scale.getZ())
+            new Vector3f(position.getX(), position.getY(), position.getZ()),
+            new Vector3f(rotation.getX(), rotation.getY(), rotation.getZ()),
+            new Vector3f(scale.getX(), scale.getY(), scale.getZ())
         );
     }
 }

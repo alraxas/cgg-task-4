@@ -1,19 +1,15 @@
 package com.cgvsu.render_engine.triangulation;
 
-//import com.alraxas.ObjReaderInitial.math.Vector3f;
-//import com.alraxas.ObjReaderInitial.model.Polygon;
-//import com.alraxas.ObjReaderInitial.triangulation.model.BaseModel;
-//import com.alraxas.ObjReaderInitial.triangulation.model.TriangulatedModel;
-
 import com.cgvsu.math.Vector3f;
+import com.cgvsu.model.Model;
 import com.cgvsu.model.Polygon;
 import com.cgvsu.render_engine.triangulation.model.BaseModel;
 import com.cgvsu.render_engine.triangulation.model.TriangulatedModel;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Triangulator {
+
     public TriangulatedModel triangulate(BaseModel model) {
         TriangulatedModel result = new TriangulatedModel(model);
 
@@ -24,6 +20,154 @@ public class Triangulator {
         return result;
     }
 
+    public Model processModel(Model model) {
+        Model triangulatedModel = triangulateModel(model);
+
+        recalculateNormals(triangulatedModel);
+
+        return triangulatedModel;
+    }
+
+    // Триангуляция стандартной модели
+    public Model triangulateModel(Model model) {
+        Model result = new Model();
+        result.setVertices(new ArrayList<>(model.getVertices()));
+        result.setTextureVertices(new ArrayList<>(model.getTextureVertices()));
+        result.setNormals(new ArrayList<>(model.getNormals()));
+
+        for (Polygon polygon : model.getPolygons()) {
+            triangulatePolygon(polygon, result);
+        }
+
+        return result;
+    }
+
+    private void triangulatePolygon(Polygon polygon, Model result) {
+        ArrayList<Integer> vertices = polygon.getVertexIndices();
+        ArrayList<Integer> textures = polygon.getTextureVertexIndices();
+        ArrayList<Integer> normals = polygon.getNormalIndices();
+
+        int vertexCount = vertices.size();
+
+        if (vertexCount < 3) return;
+        if (vertexCount == 3) {
+            result.getPolygons().add(copyPolygon(polygon));
+            return;
+        }
+
+        boolean hasUV = !textures.isEmpty();
+        boolean hasNormals = !normals.isEmpty();
+
+        // Простая веерная триангуляция для гарантии результата
+        for (int i = 1; i < vertexCount - 1; i++) {
+            Polygon triangle = new Polygon();
+
+            triangle.getVertexIndices().add(vertices.get(0));
+            triangle.getVertexIndices().add(vertices.get(i));
+            triangle.getVertexIndices().add(vertices.get(i + 1));
+
+            if (hasUV) {
+                triangle.getTextureVertexIndices().add(textures.get(0));
+                triangle.getTextureVertexIndices().add(textures.get(i));
+                triangle.getTextureVertexIndices().add(textures.get(i + 1));
+            }
+
+            if (hasNormals) {
+                triangle.getNormalIndices().add(normals.get(0));
+                triangle.getNormalIndices().add(normals.get(i));
+                triangle.getNormalIndices().add(normals.get(i + 1));
+            }
+
+            result.getPolygons().add(triangle);
+        }
+    }
+
+    // Пересчет нормалей для модели
+    public void recalculateNormals(Model model) {
+        List<Vector3f> vertices = model.getVertices();
+        List<Polygon> polygons = model.getPolygons();
+
+        // Создаем список для новых нормалей
+        List<Vector3f> newNormals = new ArrayList<>();
+        for (int i = 0; i < vertices.size(); i++) {
+            newNormals.add(new Vector3f(0, 0, 0));
+        }
+
+        // Вычисляем нормали для каждого полигона и добавляем к вершинам
+        for (Polygon polygon : polygons) {
+            List<Integer> vertexIndices = polygon.getVertexIndices();
+            if (vertexIndices.size() < 3) continue;
+
+            // Получаем вершины полигона
+            Vector3f v1 = vertices.get(vertexIndices.get(0));
+            Vector3f v2 = vertices.get(vertexIndices.get(1));
+            Vector3f v3 = vertices.get(vertexIndices.get(2));
+
+            // Вычисляем нормаль полигона
+            Vector3f normal = calculatePolygonNormal(v1, v2, v3);
+
+            // Добавляем нормаль к каждой вершине полигона
+            for (Integer vertexIndex : vertexIndices) {
+                Vector3f currentNormal = newNormals.get(vertexIndex);
+                currentNormal.setX(currentNormal.getX() + normal.getX());
+                currentNormal.setY(currentNormal.getY() + normal.getY());
+                currentNormal.setZ(currentNormal.getZ() + normal.getZ());
+            }
+        }
+
+        // Нормализуем все нормали
+        for (Vector3f normal : newNormals) {
+            normalizeVector(normal);
+        }
+
+        // Обновляем нормали в модели
+        model.setNormals((ArrayList<Vector3f>) newNormals);
+
+        // Обновляем индексы нормалей в полигонах
+        for (Polygon polygon : polygons) {
+            List<Integer> vertexIndices = polygon.getVertexIndices();
+            polygon.getNormalIndices().clear();
+
+            // Каждая вершина теперь ссылается на свою нормаль по тому же индексу
+            for (int i = 0; i < vertexIndices.size(); i++) {
+                polygon.getNormalIndices().add(vertexIndices.get(i));
+            }
+        }
+    }
+
+    // Вспомогательный метод для вычисления нормали полигона
+    private Vector3f calculatePolygonNormal(Vector3f v1, Vector3f v2, Vector3f v3) {
+        Vector3f edge1 = new Vector3f(
+                v2.getX() - v1.getX(),
+                v2.getY() - v1.getY(),
+                v2.getZ() - v1.getZ()
+        );
+
+        Vector3f edge2 = new Vector3f(
+                v3.getX() - v1.getX(),
+                v3.getY() - v1.getY(),
+                v3.getZ() - v1.getZ()
+        );
+
+        return crossProduct(edge1, edge2);
+    }
+
+    // Нормализация вектора
+    private void normalizeVector(Vector3f vector) {
+        float length = (float) Math.sqrt(
+                vector.getX() * vector.getX() +
+                        vector.getY() * vector.getY() +
+                        vector.getZ() * vector.getZ()
+        );
+
+        if (length > 0) {
+            vector.setX(vector.getX() / length);
+            vector.setY(vector.getY() / length);
+            vector.setZ(vector.getZ() / length);
+        }
+    }
+
+    // Оригинальные методы остаются без изменений
     public void triangulatePolygonEarClipping(Polygon originalPolygon, TriangulatedModel result, List<Vector3f> allVertices) {
         ArrayList<Integer> vertices = originalPolygon.getVertexIndices();
         ArrayList<Integer> textures = originalPolygon.getTextureVertexIndices();
@@ -37,7 +181,6 @@ public class Triangulator {
             return;
         }
 
-        // Создаем копии для модификации
         List<Integer> remainingVertices = new ArrayList<>(vertices);
         List<Integer> remainingTextures = new ArrayList<>(textures);
         List<Integer> remainingNormals = new ArrayList<>(normals);
@@ -54,7 +197,6 @@ public class Triangulator {
                 int next = (i + 1) % remainingVertices.size();
 
                 if (isEar(prev, curr, next, remainingVertices, allVertices)) {
-                    // Создаем треугольник из "уха"
                     Polygon triangle = new Polygon();
 
                     triangle.getVertexIndices().add(remainingVertices.get(prev));
@@ -75,7 +217,6 @@ public class Triangulator {
 
                     result.polygons.add(triangle);
 
-                    // Удаляем вершину "уха" из полигона
                     remainingVertices.remove(curr);
                     if (hasUV) remainingTextures.remove(curr);
                     if (hasNormals) remainingNormals.remove(curr);
@@ -85,13 +226,11 @@ public class Triangulator {
             }
 
             if (!earFound) {
-                // Резервный вариант - веерная триангуляция
                 triangulatePolygonFan(remainingVertices, remainingTextures, remainingNormals, result);
                 break;
             }
         }
 
-        // Добавляем последний треугольник
         if (remainingVertices.size() == 3) {
             Polygon lastTriangle = new Polygon();
             lastTriangle.getVertexIndices().addAll(remainingVertices);
@@ -107,12 +246,10 @@ public class Triangulator {
         Vector3f b = vertices.get(vertexIndices.get(curr));
         Vector3f c = vertices.get(vertexIndices.get(next));
 
-        // Проверяем, что угол выпуклый
         if (!isConvex(a, b, c)) {
             return false;
         }
 
-        // Проверяем, что внутри треугольника нет других вершин
         for (int i = 0; i < vertexIndices.size(); i++) {
             if (i == prev || i == curr || i == next) continue;
 
@@ -129,13 +266,11 @@ public class Triangulator {
         Vector3f ab = new Vector3f(b.getX() - a.getX(), b.getY() - a.getY(), b.getZ() - a.getZ());
         Vector3f bc = new Vector3f(c.getX() - b.getX(), c.getY() - b.getY(), c.getZ() - b.getZ());
 
-        // Векторное произведение для определения выпуклости
         Vector3f cross = crossProduct(ab, bc);
-        return cross.getZ() >= 0; // Для 2D полигонов в плоскости XY
+        return cross.getZ() >= 0;
     }
 
     private boolean isPointInTriangle(Vector3f p, Vector3f a, Vector3f b, Vector3f c) {
-        // Алгоритм барицентрических координат
         Vector3f v0 = new Vector3f(c.getX() - a.getX(), c.getY() - a.getY(), c.getZ() - a.getZ());
         Vector3f v1 = new Vector3f(b.getX() - a.getX(), b.getY() - a.getY(), b.getZ() - a.getZ());
         Vector3f v2 = new Vector3f(p.getX() - a.getX(), p.getY() - a.getY(), p.getZ() - a.getZ());
@@ -162,7 +297,7 @@ public class Triangulator {
     }
 
     private float dotProduct(Vector3f a, Vector3f b) {
-        return a.getX() * b.getX() + a.getY() * b.getY() + a.getZ() * b.getZ();
+        return (float) (a.getX() * b.getX() + a.getY() * b.getY() + a.getZ() * b.getZ());
     }
 
     private void triangulatePolygonFan(List<Integer> vertices, List<Integer> textures,
@@ -192,6 +327,7 @@ public class Triangulator {
             result.polygons.add(triangle);
         }
     }
+
     private Polygon copyPolygon(Polygon p) {
         Polygon copy = new Polygon();
         copy.getVertexIndices().addAll(p.getVertexIndices());

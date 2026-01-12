@@ -1,4 +1,4 @@
-package Math;
+package com.cgvsu.math;
 
 public class Matrix4 {
 
@@ -72,7 +72,7 @@ public class Matrix4 {
         return result;
     }
 
-    public Vector4 multiplyVector(Vector4 vector) {
+    public Vector4f multiplyVector(Vector4f vector) {
         if (vector == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
         }
@@ -84,7 +84,7 @@ public class Matrix4 {
                    data[2][2] * vector.getZ() + data[2][3] * vector.getW();
         double w = data[3][0] * vector.getX() + data[3][1] * vector.getY() + 
                    data[3][2] * vector.getZ() + data[3][3] * vector.getW();
-        return new Vector4(x, y, z, w);
+        return new Vector4f(x, y, z, w);
     }
 
     /**
@@ -93,12 +93,12 @@ public class Matrix4 {
      * @param vector вектор 3D
      * @return преобразованный вектор 3D
      */
-    public Vector3 transformVector(Vector3 vector) {
+    public Vector3f transformVector(Vector3f vector) {
         if (vector == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
         }
-        Vector4 v4 = toVector4(vector);
-        Vector4 result = multiplyVector(v4);
+        Vector4f v4 = toVector4(vector);
+        Vector4f result = multiplyVector(v4);
         return toVector3(result);
     }
 
@@ -250,11 +250,11 @@ public class Matrix4 {
      * @param angle угол в радианах
      * @return матрица вращения
      */
-    public static Matrix4 rotate(Vector3 axis, double angle) {
+    public static Matrix4 rotate(Vector3f axis, double angle) {
         if (axis == null) {
             throw new IllegalArgumentException("Ось не может быть null");
         }
-        Vector3 normalizedAxis = axis.normalize();
+        Vector3f normalizedAxis = axis.normalize();
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         double oneMinusCos = 1.0 - cos;
@@ -299,7 +299,7 @@ public class Matrix4 {
      * @param translation вектор переноса
      * @return матрица переноса
      */
-    public static Matrix4 translate(Vector3 translation) {
+    public static Matrix4 translate(Vector3f translation) {
         if (translation == null) {
             throw new IllegalArgumentException("Вектор переноса не может быть null");
         }
@@ -311,11 +311,11 @@ public class Matrix4 {
      * @param v вектор 3D
      * @return вектор 4D
      */
-    public static Vector4 toVector4(Vector3 v) {
+    public static Vector4f toVector4(Vector3f v) {
         if (v == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
         }
-        return new Vector4(v.getX(), v.getY(), v.getZ(), 1.0);
+        return new Vector4f(v.getX(), v.getY(), v.getZ(), 1.0);
     }
 
     /**
@@ -323,14 +323,14 @@ public class Matrix4 {
      * @param v вектор 4D
      * @return вектор 3D
      */
-    public static Vector3 toVector3(Vector4 v) {
+    public static Vector3f toVector3(Vector4f v) {
         if (v == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
         }
         if (Math.abs(v.getW()) < 1e-9) {
             throw new ArithmeticException("W компонента слишком мала для деления");
         }
-        return new Vector3(v.getX() / v.getW(), v.getY() / v.getW(), v.getZ() / v.getW());
+        return new Vector3f(v.getX() / v.getW(), v.getY() / v.getW(), v.getZ() / v.getW());
     }
 
     @Override

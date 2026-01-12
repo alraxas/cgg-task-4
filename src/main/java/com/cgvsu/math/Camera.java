@@ -1,13 +1,13 @@
-package Math;
+package com.cgvsu.math;
 
 /**
  * Класс для представления камеры с улучшенным управлением
  * Поддерживает управление клавиатурой и мышью
  */
 public class Camera {
-    private Vector3 position;      // Позиция камеры
-    private Vector3 target;         // Точка, на которую смотрит камера
-    private Vector3 up;              // Вектор "вверх" для камеры
+    private Vector3f position;      // Позиция камеры
+    private Vector3f target;         // Точка, на которую смотрит камера
+    private Vector3f up;              // Вектор "вверх" для камеры
     
     // Углы для сферических координат (для управления мышью)
     private double yaw;              // Угол поворота вокруг оси Y (в радианах)
@@ -27,9 +27,9 @@ public class Camera {
      * Создает камеру с начальными параметрами
      */
     public Camera() {
-        this.position = new Vector3(0.0, 0.0, 5.0);
-        this.target = new Vector3(0.0, 0.0, 0.0);
-        this.up = new Vector3(0.0, 1.0, 0.0);
+        this.position = new Vector3f(0.0, 0.0, 5.0);
+        this.target = new Vector3f(0.0, 0.0, 0.0);
+        this.up = new Vector3f(0.0, 1.0, 0.0);
         
         this.yaw = 0.0;
         this.pitch = 0.0;
@@ -45,10 +45,10 @@ public class Camera {
     /**
      * Создает камеру с заданными параметрами
      */
-    public Camera(Vector3 position, Vector3 target, Vector3 up) {
-        this.position = position != null ? position : new Vector3(0.0, 0.0, 5.0);
-        this.target = target != null ? target : new Vector3(0.0, 0.0, 0.0);
-        this.up = up != null ? up.normalize() : new Vector3(0.0, 1.0, 0.0);
+    public Camera(Vector3f position, Vector3f target, Vector3f up) {
+        this.position = position != null ? position : new Vector3f(0.0, 0.0, 5.0);
+        this.target = target != null ? target : new Vector3f(0.0, 0.0, 0.0);
+        this.up = up != null ? up.normalize() : new Vector3f(0.0, 1.0, 0.0);
         
         this.yaw = 0.0;
         this.pitch = 0.0;
@@ -67,9 +67,9 @@ public class Camera {
      */
     public Matrix4 getViewMatrix() {
         // Вычисляем векторы камеры
-        Vector3 forward = target.subtract(position).normalize();
-        Vector3 right = forward.multiplyVectorVector(up).normalize();
-        Vector3 cameraUp = right.multiplyVectorVector(forward).normalize();
+        Vector3f forward = target.subtract(position).normalize();
+        Vector3f right = forward.multiplyVectorVector(up).normalize();
+        Vector3f cameraUp = right.multiplyVectorVector(forward).normalize();
         
         // Создаем матрицу вида (look-at matrix) для векторов-столбцов
         // Матрица вида: [right.x  right.y  right.z  -dot(right,pos)]
@@ -108,14 +108,14 @@ public class Camera {
         double x = target.getX() + distance * Math.cos(pitch) * Math.sin(yaw);
         double y = target.getY() + distance * Math.sin(pitch);
         double z = target.getZ() + distance * Math.cos(pitch) * Math.cos(yaw);
-        this.position = new Vector3(x, y, z);
+        this.position = new Vector3f(x, y, z);
     }
 
     /**
      * Обновляет углы на основе позиции камеры
      */
     private void updateAnglesFromPosition() {
-        Vector3 direction = position.subtract(target);
+        Vector3f direction = position.subtract(target);
         this.distance = direction.length();
         
         if (distance < 1e-9) {
@@ -132,7 +132,7 @@ public class Camera {
      * Движение камеры вперед
      */
     public void moveForward() {
-        Vector3 direction = target.subtract(position).normalize();
+        Vector3f direction = target.subtract(position).normalize();
         position = position.add(direction.multiply(moveSpeed));
         target = target.add(direction.multiply(moveSpeed));
     }
@@ -141,7 +141,7 @@ public class Camera {
      * Движение камеры назад
      */
     public void moveBackward() {
-        Vector3 direction = position.subtract(target).normalize();
+        Vector3f direction = position.subtract(target).normalize();
         position = position.add(direction.multiply(moveSpeed));
         target = target.add(direction.multiply(moveSpeed));
     }
@@ -150,9 +150,9 @@ public class Camera {
      * Движение камеры влево
      */
     public void moveLeft() {
-        Vector3 forward = target.subtract(position).normalize();
-        Vector3 right = forward.multiplyVectorVector(up).normalize();
-        Vector3 left = right.multiply(-1.0);
+        Vector3f forward = target.subtract(position).normalize();
+        Vector3f right = forward.multiplyVectorVector(up).normalize();
+        Vector3f left = right.multiply(-1.0);
         position = position.add(left.multiply(moveSpeed));
         target = target.add(left.multiply(moveSpeed));
     }
@@ -161,8 +161,8 @@ public class Camera {
      * Движение камеры вправо
      */
     public void moveRight() {
-        Vector3 forward = target.subtract(position).normalize();
-        Vector3 right = forward.multiplyVectorVector(up).normalize();
+        Vector3f forward = target.subtract(position).normalize();
+        Vector3f right = forward.multiplyVectorVector(up).normalize();
         position = position.add(right.multiply(moveSpeed));
         target = target.add(right.multiply(moveSpeed));
     }
@@ -257,11 +257,11 @@ public class Camera {
 
     // Геттеры и сеттеры
 
-    public Vector3 getPosition() {
+    public Vector3f getPosition() {
         return position;
     }
 
-    public void setPosition(Vector3 position) {
+    public void setPosition(Vector3f position) {
         if (position == null) {
             throw new IllegalArgumentException("Позиция не может быть null");
         }
@@ -269,11 +269,11 @@ public class Camera {
         updateAnglesFromPosition();
     }
 
-    public Vector3 getTarget() {
+    public Vector3f getTarget() {
         return target;
     }
 
-    public void setTarget(Vector3 target) {
+    public void setTarget(Vector3f target) {
         if (target == null) {
             throw new IllegalArgumentException("Цель не может быть null");
         }
@@ -281,11 +281,11 @@ public class Camera {
         updateAnglesFromPosition();
     }
 
-    public Vector3 getUp() {
+    public Vector3f getUp() {
         return up;
     }
 
-    public void setUp(Vector3 up) {
+    public void setUp(Vector3f up) {
         if (up == null) {
             throw new IllegalArgumentException("Вектор 'вверх' не может быть null");
         }

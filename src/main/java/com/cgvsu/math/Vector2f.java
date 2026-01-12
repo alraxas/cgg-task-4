@@ -1,50 +1,67 @@
 package com.cgvsu.math;
 
-import java.util.Objects;
-
-// Это заготовка для собственной библиотеки для работы с линейной алгеброй
 public class Vector2f {
-    private static final float EPSILON = 1e-7f;
-    private final float x, y;
+    private double x;
+    private double y;
 
-    public Vector2f(float x, float y) {
+    public Vector2f() {
+        this(0.0, 0.0);
+    }
+
+    public Vector2f(double x, double y) {
         this.x = x;
         this.y = y;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        Vector2f other = (Vector2f) obj;
-        return Math.abs(x - other.x) < EPSILON &&
-                Math.abs(y - other.y) < EPSILON;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(
-                Float.hashCode(x),
-                Float.hashCode(y)
-        );
-    }
-
-    public boolean equals(Vector2f other) {
-        if (other == null) return false;
-        return Math.abs(x - other.x) < EPSILON &&
-                Math.abs(y - other.y) < EPSILON;
-    }
-
-    public float getX() {
+    public double getX() {
         return x;
     }
 
-    public float getY() {
+    public double getY() {
         return y;
     }
 
-    @Override
-    public String toString() {
-        return String.format("Vector2f(%.6f, %.6f)", x, y);
+    public Vector2f add(Vector2f other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Вектор не может быть null");
+        }
+        return new Vector2f(this.x + other.x, this.y + other.y);
+    }
+
+    public Vector2f subtract(Vector2f other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Вектор не может быть null");
+        }
+        return new Vector2f(this.x - other.x, this.y - other.y);
+    }
+
+    public Vector2f multiply(double scalar) {
+        return new Vector2f(this.x * scalar, this.y * scalar);
+    }
+
+    public Vector2f divide(double scalar) {
+        if (scalar == 0.0) {
+            throw new ArithmeticException("Деление на ноль невозможно");
+        }
+        return new Vector2f(this.x / scalar, this.y / scalar);
+    }
+
+    public double length() {
+        return Math.sqrt(x * x + y * y);
+    }
+
+    public Vector2f normalize() {
+        double len = length();
+        if (len == 0.0) {
+            throw new ArithmeticException("Невозможно нормализовать нулевой вектор");
+        }
+        return new Vector2f(x / len, y / len);
+    }
+    public double multiplyVectorScalar(Vector2f other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Вектор не может быть null");
+        }
+        return this.x * other.x + this.y * other.y;
     }
 }
+
