@@ -56,7 +56,7 @@ public class GuiController {
             camera.setAspectRatio((float) (width / height));
 
             if (mesh != null) {
-                RenderEngine.render(canvas.getGraphicsContext2D(), camera, mesh, (int) width, (int) height);
+                RenderEngine.renderWireframe(canvas.getGraphicsContext2D(), camera, mesh, (int) width, (int) height);
             }
         });
 

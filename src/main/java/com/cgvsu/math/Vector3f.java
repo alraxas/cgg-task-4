@@ -76,6 +76,20 @@ public class Vector3f {
         return new Vector3f(x / len, y / len, z / len);
     }
 
+    public void normalizeVector(Vector3f vector) {
+        float length = (float) Math.sqrt(
+                vector.getX() * vector.getX() +
+                        vector.getY() * vector.getY() +
+                        vector.getZ() * vector.getZ()
+        );
+
+        if (length > 1e-6f) {
+            vector.setX(vector.getX() / length);
+            vector.setY(vector.getY() / length);
+            vector.setZ(vector.getZ() / length);
+        }
+    }
+
     public double multiplyVectorScalar(Vector3f other) {
         if (other == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
