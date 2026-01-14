@@ -10,6 +10,7 @@ public class GraphicConveyor {
                 0, 0, 1, 0,
                 0, 0, 0, 1};
         return new Matrix4f(matrix);
+        //TODO: матрицу нормальную
     }
 
     public static Matrix4f lookAt(Vector3f eye, Vector3f target) {

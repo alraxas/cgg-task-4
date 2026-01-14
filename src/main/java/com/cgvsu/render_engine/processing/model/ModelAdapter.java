@@ -1,4 +1,4 @@
-package com.cgvsu.render_engine.triangulation.model;
+package com.cgvsu.render_engine.processing.model;
 
 
 import com.cgvsu.model.Model;

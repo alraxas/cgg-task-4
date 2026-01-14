@@ -1,9 +1,8 @@
-package com.cgvsu.render_engine;
+package com.cgvsu.render_engine.processing;
 
 import com.cgvsu.model.Model;
 //import com.cgvsu.render_engine.NormalCalculator;
-import com.cgvsu.render_engine.triangulation.NormalCalculator;
-import com.cgvsu.render_engine.triangulation.Triangulator;
+
 
 public class ModelProcessor {
     private final Triangulator triangulator;

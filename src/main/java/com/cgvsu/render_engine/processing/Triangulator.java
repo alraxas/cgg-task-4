@@ -1,10 +1,10 @@
-package com.cgvsu.render_engine.triangulation;
+package com.cgvsu.render_engine.processing;
 
 import com.cgvsu.math.Vector3f;
 import com.cgvsu.model.Model;
 import com.cgvsu.model.Polygon;
-import com.cgvsu.render_engine.triangulation.model.BaseModel;
-import com.cgvsu.render_engine.triangulation.model.TriangulatedModel;
+import com.cgvsu.render_engine.processing.model.BaseModel;
+import com.cgvsu.render_engine.processing.model.TriangulatedModel;
 
 import java.util.*;
 

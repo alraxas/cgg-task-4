@@ -1,4 +1,4 @@
-package com.cgvsu.render_engine.triangulation;
+package com.cgvsu.render_engine.processing;
 
 import com.cgvsu.math.Vector3f;
 import com.cgvsu.model.Model;
