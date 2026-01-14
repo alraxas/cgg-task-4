@@ -17,7 +17,6 @@ import static com.cgvsu.render_engine.GraphicConveyor.*;
 import static com.cgvsu.render_engine.rasterization.TriangleRasterizer.EPSILON;
 
 public class RenderEngine {
-
     private ZBuffer zBuffer;
     private TriangleRasterizer rasterizer;
 
@@ -149,6 +148,7 @@ public class RenderEngine {
             javax.vecmath.Vector2f p3 = new javax.vecmath.Vector2f(screen3.x, screen3.y);
 
             // Растеризуем треугольник
+            //TODO: заметить классы после добавления метода multiplyMatrix4ByVector3
             rasterizer.rasterizeTriangle(p1, p2, p3,
                     transformed1, transformed2, transformed3,
                     graphicsContext, zBuffer, fillColor);

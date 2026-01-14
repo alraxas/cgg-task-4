@@ -76,7 +76,7 @@ public class Vector3f {
         return new Vector3f(x / len, y / len, z / len);
     }
 
-    public void normalizeVector(Vector3f vector) {
+    public static void normalizeVector(Vector3f vector) {
         float length = (float) Math.sqrt(
                 vector.getX() * vector.getX() +
                         vector.getY() * vector.getY() +

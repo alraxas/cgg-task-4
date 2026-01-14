@@ -1,14 +1,14 @@
 package com.cgvsu.render_engine.rasterization;
 
 public class ZBuffer {
-    private final float[][] buffer;
+    private final double[][] buffer;
     private final int width;
     private final int height;
 
     public ZBuffer(int width, int height) {
         this.width = width;
         this.height = height;
-        this.buffer = new float[width][height];
+        this.buffer = new double[width][height];
         clear();
     }
 
@@ -20,7 +20,7 @@ public class ZBuffer {
         }
     }
 
-    public boolean testAndSet(int x, int y, float depth) {
+    public boolean testAndSet(int x, int y, double depth) {
         if (x < 0 || x >= width || y < 0 || y >= height) {
             return false;
         }
@@ -33,9 +33,9 @@ public class ZBuffer {
         return false;
     }
 
-    public float getDepth(int x, int y) {
+    public double getDepth(int x, int y) {
         if (x < 0 || x >= width || y < 0 || y >= height) {
-            return Float.MAX_VALUE;
+            return Double.MAX_VALUE;
         }
         return buffer[x][y];
     }

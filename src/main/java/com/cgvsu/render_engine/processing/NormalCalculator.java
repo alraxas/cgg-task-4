@@ -8,13 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NormalCalculator {
-    private static final float EPSILON = 1e-6f;
-
-    public void recalculateNormals(Model model) {
+    public static void recalculateNormals(Model model) {
         List<Vector3f> vertices = model.getVertices();
         List<Polygon> polygons = model.getPolygons();
 
-        List<Vector3f> newNormals = new ArrayList<>();
+        ArrayList<Vector3f> newNormals = new ArrayList<>();
         for (int i = 0; i < vertices.size(); i++) {
             newNormals.add(new Vector3f(0, 0, 0));
         }
@@ -26,9 +24,10 @@ public class NormalCalculator {
             Vector3f v1 = vertices.get(vertexIndices.get(0));
             Vector3f v2 = vertices.get(vertexIndices.get(1));
             Vector3f v3 = vertices.get(vertexIndices.get(2));
-
+            //TODO: change method to math package
             Vector3f normal = calculatePolygonNormal(v1, v2, v3);
 
+            // Добавляем нормаль к каждой вершине полигона
             for (Integer vertexIndex : vertexIndices) {
                 Vector3f currentNormal = newNormals.get(vertexIndex);
                 currentNormal.setX(currentNormal.getX() + normal.getX());
@@ -38,24 +37,23 @@ public class NormalCalculator {
         }
 
         for (Vector3f normal : newNormals) {
-//            normal = normal.normalize();
-            normalizeVector(normal);
-//            normal.normalizeVector(normal);
+            Vector3f.normalizeVector(normal);
         }
 
-        model.setNormals((ArrayList<Vector3f>) newNormals);
+        model.setNormals(newNormals);
 
         for (Polygon polygon : polygons) {
             List<Integer> vertexIndices = polygon.getVertexIndices();
             polygon.getNormalIndices().clear();
 
+            // Каждая вершина теперь ссылается на свою нормаль по тому же индексу
             for (Integer vertexIndex : vertexIndices) {
                 polygon.getNormalIndices().add(vertexIndex);
             }
         }
     }
 
-    private Vector3f calculatePolygonNormal(Vector3f v1, Vector3f v2, Vector3f v3) {
+    private static Vector3f calculatePolygonNormal(Vector3f v1, Vector3f v2, Vector3f v3) {
         Vector3f edge1 = new Vector3f(
                 v2.getX() - v1.getX(),
                 v2.getY() - v1.getY(),
@@ -69,28 +67,5 @@ public class NormalCalculator {
         );
 
         return edge1.multiplyVectorVector(edge2);
-//        return crossProduct(edge1, edge2);
-    }
-
-    private Vector3f crossProduct(Vector3f a, Vector3f b) {
-        return new Vector3f(
-                a.getY() * b.getZ() - a.getZ() * b.getY(),
-                a.getZ() * b.getX() - a.getX() * b.getZ(),
-                a.getX() * b.getY() - a.getY() * b.getX()
-        );
-    }
-
-    private void normalizeVector(Vector3f vector) {
-        float length = (float) Math.sqrt(
-                vector.getX() * vector.getX() +
-                        vector.getY() * vector.getY() +
-                        vector.getZ() * vector.getZ()
-        );
-
-        if (length > EPSILON) {
-            vector.setX(vector.getX() / length);
-            vector.setY(vector.getY() / length);
-            vector.setZ(vector.getZ() / length);
-        }
     }
 }

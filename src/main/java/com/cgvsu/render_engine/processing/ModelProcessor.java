@@ -1,16 +1,12 @@
 package com.cgvsu.render_engine.processing;
 
 import com.cgvsu.model.Model;
-//import com.cgvsu.render_engine.NormalCalculator;
-
 
 public class ModelProcessor {
     private final Triangulator triangulator;
-    private final NormalCalculator normalCalculator;
 
     public ModelProcessor() {
         this.triangulator = new Triangulator();
-        this.normalCalculator = new NormalCalculator();
     }
 
     public Model processModel(Model model) {
@@ -18,7 +14,7 @@ public class ModelProcessor {
         Model triangulatedModel = triangulator.triangulateModel(model);
 
         // Пересчет нормалей
-        normalCalculator.recalculateNormals(triangulatedModel);
+        NormalCalculator.recalculateNormals(triangulatedModel);
 
         return triangulatedModel;
     }
@@ -28,6 +24,6 @@ public class ModelProcessor {
     }
 
     public void recalculateNormals(Model model) {
-        normalCalculator.recalculateNormals(model);
+        NormalCalculator.recalculateNormals(model);
     }
 }

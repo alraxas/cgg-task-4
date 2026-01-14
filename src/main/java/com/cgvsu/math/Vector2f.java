@@ -57,11 +57,17 @@ public class Vector2f {
         }
         return new Vector2f(x / len, y / len);
     }
+
     public double multiplyVectorScalar(Vector2f other) {
         if (other == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
         }
         return this.x * other.x + this.y * other.y;
+    }
+
+    public static double edgeFunction(Vector2f a, Vector2f b, Vector2f c) {
+        return ((c.x - a.x) * (b.y - a.y) -
+                (c.y - a.y) * (b.x - a.x));
     }
 }
 
