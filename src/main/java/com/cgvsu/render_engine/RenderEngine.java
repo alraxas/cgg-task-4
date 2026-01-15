@@ -32,13 +32,13 @@ public class RenderEngine {
             final int width,
             final int height) {
         // Существующий метод рендеринга каркаса
-        javax.vecmath.Matrix4f modelMatrix = rotateScaleTranslate();
-        javax.vecmath.Matrix4f viewMatrix = camera.getViewMatrix();
-        javax.vecmath.Matrix4f projectionMatrix = camera.getProjectionMatrix();
+        Matrix4f modelMatrix = rotateScaleTranslate();
+        Matrix4f viewMatrix = camera.getViewMatrix();
+        Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        javax.vecmath.Matrix4f modelViewProjectionMatrix = new javax.vecmath.Matrix4f(modelMatrix);
-        modelViewProjectionMatrix.mul(viewMatrix);
-        modelViewProjectionMatrix.mul(projectionMatrix);
+        Matrix4f modelViewProjectionMatrix = new Matrix4f(modelMatrix);
+        modelViewProjectionMatrix.multiply(viewMatrix);
+        modelViewProjectionMatrix.multiply(projectionMatrix);
 
         final int nPolygons = mesh.polygons.size();
         for (int polygonInd = 0; polygonInd < nPolygons; ++polygonInd) {
@@ -102,15 +102,15 @@ public class RenderEngine {
         graphicsContext.clearRect(0, 0, width, height);
 
         // Получаем матрицы преобразования
-        javax.vecmath.Matrix4f modelMatrix = rotateScaleTranslate();
-        javax.vecmath.Matrix4f viewMatrix = camera.getViewMatrix();
-        javax.vecmath.Matrix4f projectionMatrix = camera.getProjectionMatrix();
+        Matrix4f modelMatrix = rotateScaleTranslate();
+        Matrix4f viewMatrix = camera.getViewMatrix();
+        Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        javax.vecmath.Matrix4f modelViewMatrix = new javax.vecmath.Matrix4f(modelMatrix);
-        modelViewMatrix.mul(viewMatrix);
+        Matrix4f modelViewMatrix = new Matrix4f(modelMatrix);
+        modelViewMatrix.multiply(viewMatrix);
 
-        javax.vecmath.Matrix4f modelViewProjectionMatrix = new javax.vecmath.Matrix4f(modelViewMatrix);
-        modelViewProjectionMatrix.mul(projectionMatrix);
+        Matrix4f modelViewProjectionMatrix = new Matrix4f(modelViewMatrix);
+        modelViewProjectionMatrix.multiply(projectionMatrix);
 
         // Проходим по всем полигонам (должны быть треугольниками после триангуляции)
         final int nPolygons = mesh.polygons.size();
@@ -193,18 +193,18 @@ public class RenderEngine {
         zBuffer = new ZBuffer(width, height);
         graphicsContext.clearRect(0, 0, width, height);
 
-        javax.vecmath.Matrix4f modelMatrix = rotateScaleTranslate();
-        javax.vecmath.Matrix4f viewMatrix = camera.getViewMatrix();
-        javax.vecmath.Matrix4f projectionMatrix = camera.getProjectionMatrix();
+        Matrix4f modelMatrix = rotateScaleTranslate();
+        Matrix4f viewMatrix = camera.getViewMatrix();
+        Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        javax.vecmath.Matrix4f modelViewMatrix = new javax.vecmath.Matrix4f(modelMatrix);
-        modelViewMatrix.mul(viewMatrix);
+        Matrix4f modelViewMatrix = new Matrix4f(modelMatrix);
+        modelViewMatrix.multiply(viewMatrix);
 
-        javax.vecmath.Matrix4f modelViewProjectionMatrix = new javax.vecmath.Matrix4f(modelViewMatrix);
-        modelViewProjectionMatrix.mul(projectionMatrix);
+        Matrix4f modelViewProjectionMatrix = new Matrix4f(modelViewMatrix);
+        modelViewProjectionMatrix.multiply(projectionMatrix);
 
         // Нормальная матрица (транспонированная обратная к model-view матрице)
-        javax.vecmath.Matrix4f normalMatrix = new javax.vecmath.Matrix4f(modelViewMatrix);
+        Matrix4f normalMatrix = new Matrix4f(modelViewMatrix);
         normalMatrix.invert();
         normalMatrix.transpose();
 

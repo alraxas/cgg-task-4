@@ -1,6 +1,9 @@
 package com.cgvsu.render_engine;
 
-import javax.vecmath.Matrix4f;
+//import javax.vecmath.Matrix4f;
+
+import com.cgvsu.math.Matrix4f;
+import com.cgvsu.math.Vector3f;
 
 public class TransformationPipeline {
     private Matrix4f modelMatrix;
@@ -9,14 +12,14 @@ public class TransformationPipeline {
     private Matrix4f mvpMatrix; // Model-View-Projection
 
     public TransformationPipeline() {
-        modelMatrix = new Matrix4f();
-        modelMatrix.setIdentity();
+//        modelMatrix = new Matrix4f();
+        modelMatrix = Matrix4f.identity();
 
-        viewMatrix = new Matrix4f();
-        viewMatrix.setIdentity();
+//        viewMatrix = new Matrix4f();
+        viewMatrix = Matrix4f.identity();
 
-        projectionMatrix = new Matrix4f();
-        projectionMatrix.setIdentity();
+//        projectionMatrix = new Matrix4f();
+        projectionMatrix = Matrix4f.identity();
 
         mvpMatrix = new Matrix4f();
     }
@@ -38,13 +41,13 @@ public class TransformationPipeline {
 
     private void updateMVP() {
         mvpMatrix.set(modelMatrix);
-        mvpMatrix.mul(viewMatrix);
-        mvpMatrix.mul(projectionMatrix);
+        mvpMatrix.multiply(viewMatrix);
+        mvpMatrix.multiply(projectionMatrix);
     }
 
-    public javax.vecmath.Vector3f transformVertex(
-            javax.vecmath.Vector3f vertex) {
-        return GraphicConveyor.multiplyMatrix4ByVector3(mvpMatrix, vertex);
+    public Vector3f transformVertex(
+            Vector3f vertex) {
+        return Matrix4f.multiplyMatrix4ByVector3(mvpMatrix, vertex);
     }
 
     public Matrix4f getModelMatrix() { return modelMatrix; }
@@ -55,7 +58,7 @@ public class TransformationPipeline {
     // Нормальная матрица (для освещения)
     public Matrix4f getNormalMatrix() {
         Matrix4f normalMatrix = new Matrix4f(modelMatrix);
-        normalMatrix.mul(viewMatrix);
+        normalMatrix.multiply(viewMatrix);
         normalMatrix.invert();
         normalMatrix.transpose();
         return normalMatrix;

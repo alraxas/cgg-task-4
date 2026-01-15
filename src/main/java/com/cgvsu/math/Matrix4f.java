@@ -59,6 +59,25 @@ public class Matrix4f {
         this.m30 = (float) matrix[12]; this.m31 = (float) matrix[13]; this.m32 = (float) matrix[14]; this.m33 = (float) matrix[15];
     }
 
+    public Matrix4f(Matrix4f matrix4f) {
+        this.m00 = matrix4f.m00;
+        this.m01 = matrix4f.m01;
+        this.m02 = matrix4f.m02;
+        this.m03 = matrix4f.m03;
+        this.m10 = matrix4f.m10;
+        this.m11 = matrix4f.m11;
+        this.m12 = matrix4f.m12;
+        this.m13 = matrix4f.m13;
+        this.m20 = matrix4f.m20;
+        this.m21 = matrix4f.m21;
+        this.m22 = matrix4f.m22;
+        this.m23 = matrix4f.m23;
+        this.m30 = matrix4f.m30;
+        this.m31 = matrix4f.m31;
+        this.m32 = matrix4f.m32;
+        this.m33 = matrix4f.m33;
+    }
+
     public void setIdentity() {
         m00 = 1.0f; m01 = 0.0f; m02 = 0.0f; m03 = 0.0f;
         m10 = 0.0f; m11 = 1.0f; m12 = 0.0f; m13 = 0.0f;
@@ -503,5 +522,6 @@ public class Matrix4f {
                 Math.abs(this.m32 - matrix4F.m32) < 1e-6f &&
                 Math.abs(this.m33 - matrix4F.m33) < 1e-6f;
     }
+
 }
 

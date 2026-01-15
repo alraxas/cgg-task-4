@@ -23,7 +23,7 @@ public class Vector3f {
         return y;
     }
 
-    public double getZ() {
+    public float getZ() {
         return z;
     }
 

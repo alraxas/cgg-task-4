@@ -1,5 +1,6 @@
 package com.cgvsu.render_engine.rendering;
 
+import com.cgvsu.math.Matrix4f;
 import com.cgvsu.math.Vector2f;
 import com.cgvsu.math.Vector3f;
 import com.cgvsu.model.Model;
@@ -8,7 +9,7 @@ import com.cgvsu.render_engine.Camera;
 import com.cgvsu.render_engine.rasterization.ZBuffer;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import javax.vecmath.Matrix4f;
+//import javax.vecmath.Matrix4f;
 import javax.vecmath.Point2f;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,8 +34,8 @@ public class WireframeRenderer {
         Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
         Matrix4f modelViewProjectionMatrix = new Matrix4f(modelMatrix);
-        modelViewProjectionMatrix.mul(viewMatrix);
-        modelViewProjectionMatrix.mul(projectionMatrix);
+        modelViewProjectionMatrix.multiply(viewMatrix);
+        modelViewProjectionMatrix.multiply(projectionMatrix);
 
         // Рендерим все полигоны
         for (Polygon polygon : mesh.polygons) {
@@ -49,17 +50,17 @@ public class WireframeRenderer {
 
             for (int i = 0; i < nVertices; i++) {
                 Vector3f vertex = mesh.vertices.get(vertexIndices.get(i));
-                javax.vecmath.Vector3f vec = new javax.vecmath.Vector3f(
+                Vector3f vec = new Vector3f(
                         (float) vertex.getX(),
                         (float) vertex.getY(),
                         (float) vertex.getZ()
                 );
 
-                javax.vecmath.Vector3f transformed = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec);
+                Vector3f transformed = Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec);
                 Point2f screenPoint = Vector2f.vertexToPoint(transformed, width, height);
 
                 screenPoints.add(screenPoint);
-                depths.add(transformed.z);
+                depths.add(transformed.getZ());
             }
 
             // Рисуем линии полигона
