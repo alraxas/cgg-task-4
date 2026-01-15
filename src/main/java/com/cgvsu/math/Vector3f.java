@@ -108,9 +108,9 @@ public class Vector3f {
             throw new IllegalArgumentException("Вектор не может быть null");
         }
         return new Vector3f(
-            this.y * other.z - this.z * other.y,
-            this.z * other.x - this.x * other.z,
-            this.x * other.y - this.y * other.x
+                this.y * other.z - this.z * other.y,
+                this.z * other.x - this.x * other.z,
+                this.x * other.y - this.y * other.x
         );
     }
 
@@ -125,5 +125,20 @@ public class Vector3f {
         this.setY(resY);
         this.setZ(resZ);
     }
+
+    public static Vector3f calculatePolygonNormal(Vector3f v1, Vector3f v2, Vector3f v3) {
+        Vector3f edge1 = new Vector3f(
+                v2.getX() - v1.getX(),
+                v2.getY() - v1.getY(),
+                v2.getZ() - v1.getZ()
+        );
+        Vector3f edge2 = new Vector3f(
+                v3.getX() - v1.getX(),
+                v3.getY() - v1.getY(),
+                v3.getZ() - v1.getZ()
+        );
+        return edge1.multiplyVectorVector(edge2);
+    }
+
 }
 
