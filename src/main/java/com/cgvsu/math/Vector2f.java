@@ -1,5 +1,10 @@
 package com.cgvsu.math;
 
+//import javax.vecmath.Point2f;
+//import javax.vecmath.Vector3f;
+
+import javax.vecmath.Point2f;
+
 public class Vector2f {
     private double x;
     private double y;
@@ -68,6 +73,10 @@ public class Vector2f {
     public static double edgeFunction(Vector2f a, Vector2f b, Vector2f c) {
         return ((c.x - a.x) * (b.y - a.y) -
                 (c.y - a.y) * (b.x - a.x));
+    }
+
+    public static Point2f vertexToPoint(final Vector3f vertex, final int width, final int height) {
+        return new Point2f((float) (vertex.getX() * width + width / 2.0F), (float) (-vertex.getY() * height + height / 2.0F));
     }
 }
 

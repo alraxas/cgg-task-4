@@ -90,7 +90,7 @@ public class Vector3f {
         }
     }
 
-    public double multiplyVectorScalar(Vector3f other) {
+    public double dot(Vector3f other) {
         if (other == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
         }

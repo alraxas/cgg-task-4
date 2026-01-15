@@ -56,7 +56,7 @@ public class WireframeRenderer {
                 );
 
                 javax.vecmath.Vector3f transformed = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec);
-                Point2f screenPoint = vertexToPoint(transformed, width, height);
+                Point2f screenPoint = Vector2f.vertexToPoint(transformed, width, height);
 
                 screenPoints.add(screenPoint);
                 depths.add(transformed.z);

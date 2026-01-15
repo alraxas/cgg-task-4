@@ -1,5 +1,6 @@
 package com.cgvsu.render_engine;
 
+import com.cgvsu.math.Matrix4f;
 import com.cgvsu.math.Vector2f;
 import com.cgvsu.math.Vector3f;
 import com.cgvsu.model.Model;
@@ -8,7 +9,7 @@ import com.cgvsu.render_engine.rasterization.TriangleRasterizer;
 import com.cgvsu.render_engine.rasterization.ZBuffer;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import javax.vecmath.Matrix4f;
+
 import javax.vecmath.Point2f;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,11 +32,11 @@ public class RenderEngine {
             final int width,
             final int height) {
         // Существующий метод рендеринга каркаса
-        Matrix4f modelMatrix = rotateScaleTranslate();
-        Matrix4f viewMatrix = camera.getViewMatrix();
-        Matrix4f projectionMatrix = camera.getProjectionMatrix();
+        javax.vecmath.Matrix4f modelMatrix = rotateScaleTranslate();
+        javax.vecmath.Matrix4f viewMatrix = camera.getViewMatrix();
+        javax.vecmath.Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        Matrix4f modelViewProjectionMatrix = new Matrix4f(modelMatrix);
+        javax.vecmath.Matrix4f modelViewProjectionMatrix = new javax.vecmath.Matrix4f(modelMatrix);
         modelViewProjectionMatrix.mul(viewMatrix);
         modelViewProjectionMatrix.mul(projectionMatrix);
 
@@ -47,14 +48,19 @@ public class RenderEngine {
             for (int vertexInPolygonInd = 0; vertexInPolygonInd < nVerticesInPolygon; ++vertexInPolygonInd) {
                 Vector3f vertex = mesh.vertices.get(mesh.polygons.get(polygonInd).getVertexIndices().get(vertexInPolygonInd));
 
-                javax.vecmath.Vector3f vertexVecmath = new javax.vecmath.Vector3f(
-                        (float) vertex.getX(),
-                        (float) vertex.getY(),
-                        (float) vertex.getZ()
-                );
+                Vector3f vertexVecmath = new Vector3f(
+                        vertex.getX(),
+                        vertex.getY(),
+                        vertex.getZ());
 
-                Point2f resultPoint = vertexToPoint(
-                        multiplyMatrix4ByVector3(modelViewProjectionMatrix, vertexVecmath),
+//                javax.vecmath.Vector3f vertexVecmath = new javax.vecmath.Vector3f(
+//                        (float) vertex.getX(),
+//                        (float) vertex.getY(),
+//                        (float) vertex.getZ()
+//                );
+
+                Point2f resultPoint = Vector2f.vertexToPoint(
+                        Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vertexVecmath),
                         width, height
                 );
                 resultPoints.add(resultPoint);
@@ -96,14 +102,14 @@ public class RenderEngine {
         graphicsContext.clearRect(0, 0, width, height);
 
         // Получаем матрицы преобразования
-        Matrix4f modelMatrix = rotateScaleTranslate();
-        Matrix4f viewMatrix = camera.getViewMatrix();
-        Matrix4f projectionMatrix = camera.getProjectionMatrix();
+        javax.vecmath.Matrix4f modelMatrix = rotateScaleTranslate();
+        javax.vecmath.Matrix4f viewMatrix = camera.getViewMatrix();
+        javax.vecmath.Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        Matrix4f modelViewMatrix = new Matrix4f(modelMatrix);
+        javax.vecmath.Matrix4f modelViewMatrix = new javax.vecmath.Matrix4f(modelMatrix);
         modelViewMatrix.mul(viewMatrix);
 
-        Matrix4f modelViewProjectionMatrix = new Matrix4f(modelViewMatrix);
+        javax.vecmath.Matrix4f modelViewProjectionMatrix = new javax.vecmath.Matrix4f(modelViewMatrix);
         modelViewProjectionMatrix.mul(projectionMatrix);
 
         // Проходим по всем полигонам (должны быть треугольниками после триангуляции)
@@ -121,31 +127,50 @@ public class RenderEngine {
             Vector3f v2 = mesh.vertices.get(vertexIndices.get(1));
             Vector3f v3 = mesh.vertices.get(vertexIndices.get(2));
 
+            Vector3f vec1 = new Vector3f((float) v1.getX(), (float) v1.getY(), (float) v1.getZ());
+            Vector3f vec2 = new Vector3f((float) v2.getX(), (float) v2.getY(), (float) v2.getZ());
+            Vector3f vec3 = new Vector3f((float) v3.getX(), (float) v3.getY(), (float) v3.getZ());
+
             // Преобразуем в vecmath.Vector3f
-            javax.vecmath.Vector3f vec1 = new javax.vecmath.Vector3f(
-                    (float) v1.getX(), (float) v1.getY(), (float) v1.getZ()
-            );
-            javax.vecmath.Vector3f vec2 = new javax.vecmath.Vector3f(
-                    (float) v2.getX(), (float) v2.getY(), (float) v2.getZ()
-            );
-            javax.vecmath.Vector3f vec3 = new javax.vecmath.Vector3f(
-                    (float) v3.getX(), (float) v3.getY(), (float) v3.getZ()
-            );
+//            javax.vecmath.Vector3f vec1 = new javax.vecmath.Vector3f(
+//                    (float) v1.getX(), (float) v1.getY(), (float) v1.getZ()
+//            );
+//            javax.vecmath.Vector3f vec2 = new javax.vecmath.Vector3f(
+//                    (float) v2.getX(), (float) v2.getY(), (float) v2.getZ()
+//            );
+//            javax.vecmath.Vector3f vec3 = new javax.vecmath.Vector3f(
+//                    (float) v3.getX(), (float) v3.getY(), (float) v3.getZ()
+//            );
 
             // Применяем преобразования
-            javax.vecmath.Vector3f transformed1 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec1);
-            javax.vecmath.Vector3f transformed2 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec2);
-            javax.vecmath.Vector3f transformed3 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec3);
+//            javax.vecmath.Vector3f transformed1 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec1);
+//            javax.vecmath.Vector3f transformed2 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec2);
+//            javax.vecmath.Vector3f transformed3 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec3);
+//
+//            // Преобразуем в экранные координаты
+//            Point2f screen1 = vertexToPoint(transformed1, width, height);
+//            Point2f screen2 = vertexToPoint(transformed2, width, height);
+//            Point2f screen3 = vertexToPoint(transformed3, width, height);
+//
+//            // Преобразуем Point2f в Vector2f
+//            javax.vecmath.Vector2f p1 = new javax.vecmath.Vector2f(screen1.x, screen1.y);
+//            javax.vecmath.Vector2f p2 = new javax.vecmath.Vector2f(screen2.x, screen2.y);
+//            javax.vecmath.Vector2f p3 = new javax.vecmath.Vector2f(screen3.x, screen3.y);
+
+
+            Vector3f transformed1 = Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec1);
+            Vector3f transformed2 = Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec2);
+            Vector3f transformed3 = Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec3);
 
             // Преобразуем в экранные координаты
-            Point2f screen1 = vertexToPoint(transformed1, width, height);
-            Point2f screen2 = vertexToPoint(transformed2, width, height);
-            Point2f screen3 = vertexToPoint(transformed3, width, height);
+            Point2f screen1 = Vector2f.vertexToPoint(transformed1, width, height);
+            Point2f screen2 = Vector2f.vertexToPoint(transformed2, width, height);
+            Point2f screen3 = Vector2f.vertexToPoint(transformed3, width, height);
 
             // Преобразуем Point2f в Vector2f
-            javax.vecmath.Vector2f p1 = new javax.vecmath.Vector2f(screen1.x, screen1.y);
-            javax.vecmath.Vector2f p2 = new javax.vecmath.Vector2f(screen2.x, screen2.y);
-            javax.vecmath.Vector2f p3 = new javax.vecmath.Vector2f(screen3.x, screen3.y);
+            Vector2f p1 = new Vector2f(screen1.x, screen1.y);
+            Vector2f p2 = new Vector2f(screen2.x, screen2.y);
+            Vector2f p3 = new Vector2f(screen3.x, screen3.y);
 
             // Растеризуем треугольник
             //TODO: заметить классы после добавления метода multiplyMatrix4ByVector3
@@ -163,23 +188,23 @@ public class RenderEngine {
             final int width,
             final int height,
             final Color baseColor,
-            final javax.vecmath.Vector3f lightDirection) {
+            final Vector3f lightDirection) {
 
         zBuffer = new ZBuffer(width, height);
         graphicsContext.clearRect(0, 0, width, height);
 
-        Matrix4f modelMatrix = rotateScaleTranslate();
-        Matrix4f viewMatrix = camera.getViewMatrix();
-        Matrix4f projectionMatrix = camera.getProjectionMatrix();
+        javax.vecmath.Matrix4f modelMatrix = rotateScaleTranslate();
+        javax.vecmath.Matrix4f viewMatrix = camera.getViewMatrix();
+        javax.vecmath.Matrix4f projectionMatrix = camera.getProjectionMatrix();
 
-        Matrix4f modelViewMatrix = new Matrix4f(modelMatrix);
+        javax.vecmath.Matrix4f modelViewMatrix = new javax.vecmath.Matrix4f(modelMatrix);
         modelViewMatrix.mul(viewMatrix);
 
-        Matrix4f modelViewProjectionMatrix = new Matrix4f(modelViewMatrix);
+        javax.vecmath.Matrix4f modelViewProjectionMatrix = new javax.vecmath.Matrix4f(modelViewMatrix);
         modelViewProjectionMatrix.mul(projectionMatrix);
 
         // Нормальная матрица (транспонированная обратная к model-view матрице)
-        Matrix4f normalMatrix = new Matrix4f(modelViewMatrix);
+        javax.vecmath.Matrix4f normalMatrix = new javax.vecmath.Matrix4f(modelViewMatrix);
         normalMatrix.invert();
         normalMatrix.transpose();
 
@@ -203,35 +228,51 @@ public class RenderEngine {
             Vector3f n2 = mesh.normals.get(normalIndices.get(1));
             Vector3f n3 = mesh.normals.get(normalIndices.get(2));
 
-            javax.vecmath.Vector3f vec1 = new javax.vecmath.Vector3f(
-                    (float) v1.getX(), (float) v1.getY(), (float) v1.getZ()
-            );
-            javax.vecmath.Vector3f vec2 = new javax.vecmath.Vector3f(
-                    (float) v2.getX(), (float) v2.getY(), (float) v2.getZ()
-            );
-            javax.vecmath.Vector3f vec3 = new javax.vecmath.Vector3f(
-                    (float) v3.getX(), (float) v3.getY(), (float) v3.getZ()
-            );
+            Vector3f vec1 = new Vector3f((float) v1.getX(), (float) v1.getY(), (float) v1.getZ());
+            Vector3f vec2 = new Vector3f((float) v2.getX(), (float) v2.getY(), (float) v2.getZ());
+            Vector3f vec3 = new Vector3f((float) v3.getX(), (float) v3.getY(), (float) v3.getZ());
 
-            // Нормали в vecmath
-            javax.vecmath.Vector3f norm1 = new javax.vecmath.Vector3f(
-                    (float) n1.getX(), (float) n1.getY(), (float) n1.getZ()
-            );
-            javax.vecmath.Vector3f norm2 = new javax.vecmath.Vector3f(
-                    (float) n2.getX(), (float) n2.getY(), (float) n2.getZ()
-            );
-            javax.vecmath.Vector3f norm3 = new javax.vecmath.Vector3f(
-                    (float) n3.getX(), (float) n3.getY(), (float) n3.getZ()
-            );
+            Vector3f norm1 = new Vector3f((float) n1.getX(), (float) n1.getY(), (float) n1.getZ());
+            Vector3f norm2 = new Vector3f((float) n2.getX(), (float) n2.getY(), (float) n2.getZ());
+            Vector3f norm3 = new Vector3f((float) n3.getX(), (float) n3.getY(), (float) n3.getZ());
+
+//            javax.vecmath.Vector3f vec1 = new javax.vecmath.Vector3f(
+//                    (float) v1.getX(), (float) v1.getY(), (float) v1.getZ()
+//            );
+//            javax.vecmath.Vector3f vec2 = new javax.vecmath.Vector3f(
+//                    (float) v2.getX(), (float) v2.getY(), (float) v2.getZ()
+//            );
+//            javax.vecmath.Vector3f vec3 = new javax.vecmath.Vector3f(
+//                    (float) v3.getX(), (float) v3.getY(), (float) v3.getZ()
+//            );
+//
+//            // Нормали в vecmath
+//            javax.vecmath.Vector3f norm1 = new javax.vecmath.Vector3f(
+//                    (float) n1.getX(), (float) n1.getY(), (float) n1.getZ()
+//            );
+//            javax.vecmath.Vector3f norm2 = new javax.vecmath.Vector3f(
+//                    (float) n2.getX(), (float) n2.getY(), (float) n2.getZ()
+//            );
+//            javax.vecmath.Vector3f norm3 = new javax.vecmath.Vector3f(
+//                    (float) n3.getX(), (float) n3.getY(), (float) n3.getZ()
+//            );
 
             // Преобразуем вершины и нормали
-            javax.vecmath.Vector3f transformed1 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec1);
-            javax.vecmath.Vector3f transformed2 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec2);
-            javax.vecmath.Vector3f transformed3 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec3);
+//            javax.vecmath.Vector3f transformed1 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec1);
+//            javax.vecmath.Vector3f transformed2 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec2);
+//            javax.vecmath.Vector3f transformed3 = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec3);
+//
+//            javax.vecmath.Vector3f transformedNorm1 = multiplyMatrix4ByVector3(normalMatrix, norm1);
+//            javax.vecmath.Vector3f transformedNorm2 = multiplyMatrix4ByVector3(normalMatrix, norm2);
+//            javax.vecmath.Vector3f transformedNorm3 = multiplyMatrix4ByVector3(normalMatrix, norm3);
 
-            javax.vecmath.Vector3f transformedNorm1 = multiplyMatrix4ByVector3(normalMatrix, norm1);
-            javax.vecmath.Vector3f transformedNorm2 = multiplyMatrix4ByVector3(normalMatrix, norm2);
-            javax.vecmath.Vector3f transformedNorm3 = multiplyMatrix4ByVector3(normalMatrix, norm3);
+            Vector3f transformed1 = Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec1);
+            Vector3f transformed2 = Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec2);
+            Vector3f transformed3 = Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec3);
+
+            Vector3f transformedNorm1 = Matrix4f.multiplyMatrix4ByVector3(normalMatrix, norm1);
+            Vector3f transformedNorm2 = Matrix4f.multiplyMatrix4ByVector3(normalMatrix, norm2);
+            Vector3f transformedNorm3 = Matrix4f.multiplyMatrix4ByVector3(normalMatrix, norm3);
 
             // Нормализуем нормали
             transformedNorm1.normalize();
@@ -239,18 +280,18 @@ public class RenderEngine {
             transformedNorm3.normalize();
 
             // Экранные координаты
-            Point2f screen1 = vertexToPoint(transformed1, width, height);
-            Point2f screen2 = vertexToPoint(transformed2, width, height);
-            Point2f screen3 = vertexToPoint(transformed3, width, height);
+            Point2f screen1 = Vector2f.vertexToPoint(transformed1, width, height);
+            Point2f screen2 = Vector2f.vertexToPoint(transformed2, width, height);
+            Point2f screen3 = Vector2f.vertexToPoint(transformed3, width, height);
 
             Vector2f p1 = new Vector2f(screen1.x, screen1.y);
             Vector2f p2 = new Vector2f(screen2.x, screen2.y);
             Vector2f p3 = new Vector2f(screen3.x, screen3.y);
 
             // Вычисляем освещение для каждой вершины
-            float light1 = Math.max(0, -transformedNorm1.dot(lightDirection));
-            float light2 = Math.max(0, -transformedNorm2.dot(lightDirection));
-            float light3 = Math.max(0, -transformedNorm3.dot(lightDirection));
+            float light1 = (float) Math.max(0, -transformedNorm1.dot(lightDirection));
+            float light2 = (float) Math.max(0, -transformedNorm2.dot(lightDirection));
+            float light3 = (float) Math.max(0, -transformedNorm3.dot(lightDirection));
 
             // Создаем модифицированный растеризатор для освещения
             rasterizeTriangleWithLighting(p1, p2, p3,
@@ -262,7 +303,7 @@ public class RenderEngine {
 
     private void rasterizeTriangleWithLighting(
             Vector2f p1, Vector2f p2, Vector2f p3,
-            javax.vecmath.Vector3f v1, javax.vecmath.Vector3f v2, javax.vecmath.Vector3f v3,
+            Vector3f v1, Vector3f v2, Vector3f v3,
             float light1, float light2, float light3,
             GraphicsContext gc, ZBuffer zBuffer, Color baseColor) {
 
@@ -273,19 +314,19 @@ public class RenderEngine {
         int maxY = Math.min((int) gc.getCanvas().getHeight() - 1,
                 (int) Math.max(Math.max(p1.getY(), p2.getY()), p3.getY()));
 
-        float area = edgeFunction(p1, p2, p3);
+        float area = (float) Vector2f.edgeFunction(p1, p2, p3);
         if (Math.abs(area) < EPSILON) return;
 
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
                 Vector2f p = new Vector2f(x, y);
 
-                float w1 = edgeFunction(p2, p3, p) / area;
-                float w2 = edgeFunction(p3, p1, p) / area;
-                float w3 = edgeFunction(p1, p2, p) / area;
+                float w1 = (float) (Vector2f.edgeFunction(p2, p3, p) / area);
+                float w2 = (float) (Vector2f.edgeFunction(p3, p1, p) / area);
+                float w3 = (float) (Vector2f.edgeFunction(p1, p2, p) / area);
 
                 if (w1 >= -EPSILON && w2 >= -EPSILON && w3 >= -EPSILON) {
-                    float z = w1 * v1.z + w2 * v2.z + w3 * v3.z;
+                    float z = (float) (w1 * v1.getZ() + w2 * v2.getZ() + w3 * v3.getZ());
 
                     if (zBuffer.testAndSet(x, y, z)) {
                         // Интерполируем освещение
@@ -303,10 +344,5 @@ public class RenderEngine {
                 }
             }
         }
-    }
-
-    private float edgeFunction(Vector2f a, Vector2f b, Vector2f c) {
-        return (float) ((c.getX() - a.getX()) * (b.getY() - a.getY()) -
-                        (c.getY() - a.getY()) * (b.getX() - a.getX()));
     }
 }

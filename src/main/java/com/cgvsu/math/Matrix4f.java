@@ -1,17 +1,17 @@
 package com.cgvsu.math;
 
-public class Matrix4 {
+public class Matrix4f {
 
     private double[][] data;
 
-    public Matrix4() {
+    public Matrix4f() {
         this.data = new double[4][4];
     }
 
-    public Matrix4(double m00, double m01, double m02, double m03,
-                   double m10, double m11, double m12, double m13,
-                   double m20, double m21, double m22, double m23,
-                   double m30, double m31, double m32, double m33) {
+    public Matrix4f(double m00, double m01, double m02, double m03,
+                    double m10, double m11, double m12, double m13,
+                    double m20, double m21, double m22, double m23,
+                    double m30, double m31, double m32, double m33) {
         this.data = new double[4][4];
         data[0][0] = m00; data[0][1] = m01; data[0][2] = m02; data[0][3] = m03;
         data[1][0] = m10; data[1][1] = m11; data[1][2] = m12; data[1][3] = m13;
@@ -19,8 +19,8 @@ public class Matrix4 {
         data[3][0] = m30; data[3][1] = m31; data[3][2] = m32; data[3][3] = m33;
     }
 
-    public static Matrix4 identity() {
-        Matrix4 result = new Matrix4();
+    public static Matrix4f identity() {
+        Matrix4f result = new Matrix4f();
         result.data[0][0] = 1.0;
         result.data[1][1] = 1.0;
         result.data[2][2] = 1.0;
@@ -28,8 +28,8 @@ public class Matrix4 {
         return result;
     }
 
-    public static Matrix4 zero() {
-        return new Matrix4();
+    public static Matrix4f zero() {
+        return new Matrix4f();
     }
 
     public double get(int row, int col) {
@@ -46,11 +46,11 @@ public class Matrix4 {
         data[row][col] = value;
     }
 
-    public Matrix4 add(Matrix4 other) {
+    public Matrix4f add(Matrix4f other) {
         if (other == null) {
             throw new IllegalArgumentException("Матрица не может быть null");
         }
-        Matrix4 result = new Matrix4();
+        Matrix4f result = new Matrix4f();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 result.data[i][j] = this.data[i][j] + other.data[i][j];
@@ -59,11 +59,11 @@ public class Matrix4 {
         return result;
     }
 
-    public Matrix4 subtract(Matrix4 other) {
+    public Matrix4f subtract(Matrix4f other) {
         if (other == null) {
             throw new IllegalArgumentException("Матрица не может быть null");
         }
-        Matrix4 result = new Matrix4();
+        Matrix4f result = new Matrix4f();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 result.data[i][j] = this.data[i][j] - other.data[i][j];
@@ -87,6 +87,15 @@ public class Matrix4 {
         return new Vector4f(x, y, z, w);
     }
 
+    public static Vector3f multiplyMatrix4ByVector3(final javax.vecmath.Matrix4f matrix, final Vector3f vertex) {
+        final double x = (vertex.getX() * matrix.m00) + (vertex.getY() * matrix.m10) + (vertex.getZ() * matrix.m20) + matrix.m30;
+        final double y = (vertex.getX() * matrix.m01) + (vertex.getY() * matrix.m11) + (vertex.getZ() * matrix.m21) + matrix.m31;
+        final double z = (vertex.getX() * matrix.m02) + (vertex.getY() * matrix.m12) + (vertex.getZ() * matrix.m22) + matrix.m32;
+        final double w = (vertex.getX() * matrix.m03) + (vertex.getY() * matrix.m13) + (vertex.getZ() * matrix.m23) + matrix.m33;
+        return new Vector3f(x / w, y / w, z / w);
+//        return new javax.vecmath.Vector3f(x / w, y / w, z / w);
+    }
+
     /**
      * Умножает матрицу на вектор-столбец Vector3 (для аффинных преобразований)
      * Вектор расширяется до Vector4 с w=1, затем преобразуется и проецируется обратно
@@ -102,11 +111,11 @@ public class Matrix4 {
         return toVector3(result);
     }
 
-    public Matrix4 multiplyMatrix(Matrix4 other) {
+    public Matrix4f multiplyMatrix(Matrix4f other) {
         if (other == null) {
             throw new IllegalArgumentException("Матрица не может быть null");
         }
-        Matrix4 result = new Matrix4();
+        Matrix4f result = new Matrix4f();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 double sum = 0.0;
@@ -119,8 +128,8 @@ public class Matrix4 {
         return result;
     }
 
-    public Matrix4 transpose() {
-        Matrix4 result = new Matrix4();
+    public Matrix4f transpose() {
+        Matrix4f result = new Matrix4f();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 result.data[i][j] = this.data[j][i];
@@ -179,8 +188,8 @@ public class Matrix4 {
      * @param sz масштаб по оси Z
      * @return матрица масштабирования
      */
-    public static Matrix4 scale(double sx, double sy, double sz) {
-        Matrix4 result = identity();
+    public static Matrix4f scale(double sx, double sy, double sz) {
+        Matrix4f result = identity();
         result.data[0][0] = sx;
         result.data[1][1] = sy;
         result.data[2][2] = sz;
@@ -192,7 +201,7 @@ public class Matrix4 {
      * @param scale единый масштаб для всех осей
      * @return матрица масштабирования
      */
-    public static Matrix4 scale(double scale) {
+    public static Matrix4f scale(double scale) {
         return scale(scale, scale, scale);
     }
 
@@ -201,8 +210,8 @@ public class Matrix4 {
      * @param angle угол в радианах
      * @return матрица вращения
      */
-    public static Matrix4 rotateX(double angle) {
-        Matrix4 result = identity();
+    public static Matrix4f rotateX(double angle) {
+        Matrix4f result = identity();
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         result.data[1][1] = cos;
@@ -217,8 +226,8 @@ public class Matrix4 {
      * @param angle угол в радианах
      * @return матрица вращения
      */
-    public static Matrix4 rotateY(double angle) {
-        Matrix4 result = identity();
+    public static Matrix4f rotateY(double angle) {
+        Matrix4f result = identity();
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         result.data[0][0] = cos;
@@ -233,8 +242,8 @@ public class Matrix4 {
      * @param angle угол в радианах
      * @return матрица вращения
      */
-    public static Matrix4 rotateZ(double angle) {
-        Matrix4 result = identity();
+    public static Matrix4f rotateZ(double angle) {
+        Matrix4f result = identity();
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         result.data[0][0] = cos;
@@ -250,7 +259,7 @@ public class Matrix4 {
      * @param angle угол в радианах
      * @return матрица вращения
      */
-    public static Matrix4 rotate(Vector3f axis, double angle) {
+    public static Matrix4f rotate(Vector3f axis, double angle) {
         if (axis == null) {
             throw new IllegalArgumentException("Ось не может быть null");
         }
@@ -263,7 +272,7 @@ public class Matrix4 {
         double y = normalizedAxis.getY();
         double z = normalizedAxis.getZ();
         
-        Matrix4 result = identity();
+        Matrix4f result = identity();
         result.data[0][0] = cos + x * x * oneMinusCos;
         result.data[0][1] = x * y * oneMinusCos - z * sin;
         result.data[0][2] = x * z * oneMinusCos + y * sin;
@@ -286,8 +295,8 @@ public class Matrix4 {
      * @param tz перенос по оси Z
      * @return матрица переноса
      */
-    public static Matrix4 translate(double tx, double ty, double tz) {
-        Matrix4 result = identity();
+    public static Matrix4f translate(double tx, double ty, double tz) {
+        Matrix4f result = identity();
         result.data[0][3] = tx;
         result.data[1][3] = ty;
         result.data[2][3] = tz;
@@ -299,7 +308,7 @@ public class Matrix4 {
      * @param translation вектор переноса
      * @return матрица переноса
      */
-    public static Matrix4 translate(Vector3f translation) {
+    public static Matrix4f translate(Vector3f translation) {
         if (translation == null) {
             throw new IllegalArgumentException("Вектор переноса не может быть null");
         }
@@ -337,10 +346,10 @@ public class Matrix4 {
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-        Matrix4 matrix4 = (Matrix4) obj;
+        Matrix4f matrix4F = (Matrix4f) obj;
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                if (Math.abs(this.data[i][j] - matrix4.data[i][j]) >= 1e-9) {
+                if (Math.abs(this.data[i][j] - matrix4F.data[i][j]) >= 1e-9) {
                     return false;
                 }
             }

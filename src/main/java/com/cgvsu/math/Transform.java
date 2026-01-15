@@ -35,15 +35,15 @@ public class Transform {
      * Порядок преобразований: M = T * R * S (для векторов-столбцов)
      * @return матрица преобразования
      */
-    public Matrix4 getMatrix() {
+    public Matrix4f getMatrix() {
         // Создаем матрицы преобразований
-        Matrix4 scaleMatrix = Matrix4.scale(scale.getX(), scale.getY(), scale.getZ());
-        Matrix4 rotationMatrix = getRotationMatrix();
-        Matrix4 translationMatrix = Matrix4.translate(position);
+        Matrix4f scaleMatrix = Matrix4f.scale(scale.getX(), scale.getY(), scale.getZ());
+        Matrix4f rotationMatrix = getRotationMatrix();
+        Matrix4f translationMatrix = Matrix4f.translate(position);
 
         // Для векторов-столбцов порядок: T * R * S
         // Последнее преобразование применяется первым
-        Matrix4 result = translationMatrix.multiplyMatrix(rotationMatrix);
+        Matrix4f result = translationMatrix.multiplyMatrix(rotationMatrix);
         result = result.multiplyMatrix(scaleMatrix);
         
         return result;
@@ -54,13 +54,13 @@ public class Transform {
      * Порядок вращения: Z, Y, X (для векторов-столбцов)
      * @return матрица вращения
      */
-    private Matrix4 getRotationMatrix() {
-        Matrix4 rotX = Matrix4.rotateX(rotation.getX());
-        Matrix4 rotY = Matrix4.rotateY(rotation.getY());
-        Matrix4 rotZ = Matrix4.rotateZ(rotation.getZ());
+    private Matrix4f getRotationMatrix() {
+        Matrix4f rotX = Matrix4f.rotateX(rotation.getX());
+        Matrix4f rotY = Matrix4f.rotateY(rotation.getY());
+        Matrix4f rotZ = Matrix4f.rotateZ(rotation.getZ());
         
         // Для векторов-столбцов: R = Rz * Ry * Rx
-        Matrix4 result = rotZ.multiplyMatrix(rotY);
+        Matrix4f result = rotZ.multiplyMatrix(rotY);
         result = result.multiplyMatrix(rotX);
         
         return result;
@@ -75,7 +75,7 @@ public class Transform {
         if (point == null) {
             throw new IllegalArgumentException("Точка не может быть null");
         }
-        Matrix4 transformMatrix = getMatrix();
+        Matrix4f transformMatrix = getMatrix();
         return transformMatrix.transformVector(point);
     }
 

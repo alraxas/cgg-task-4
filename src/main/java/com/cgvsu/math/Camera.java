@@ -65,7 +65,7 @@ public class Camera {
      * Возвращает матрицу вида (view matrix) для векторов-столбцов
      * @return матрица вида
      */
-    public Matrix4 getViewMatrix() {
+    public Matrix4f getViewMatrix() {
         // Вычисляем векторы камеры
         Vector3f forward = target.subtract(position).normalize();
         Vector3f right = forward.multiplyVectorVector(up).normalize();
@@ -76,22 +76,22 @@ public class Camera {
         //               [up.x    up.y    up.z    -dot(up,pos)]
         //               [-forward.x -forward.y -forward.z dot(forward,pos)]
         //               [0       0       0       1]
-        Matrix4 view = new Matrix4();
+        Matrix4f view = new Matrix4f();
         
         view.set(0, 0, right.getX());
         view.set(0, 1, right.getY());
         view.set(0, 2, right.getZ());
-        view.set(0, 3, -right.multiplyVectorScalar(position));
+        view.set(0, 3, -right.dot(position));
         
         view.set(1, 0, cameraUp.getX());
         view.set(1, 1, cameraUp.getY());
         view.set(1, 2, cameraUp.getZ());
-        view.set(1, 3, -cameraUp.multiplyVectorScalar(position));
+        view.set(1, 3, -cameraUp.dot(position));
         
         view.set(2, 0, -forward.getX());
         view.set(2, 1, -forward.getY());
         view.set(2, 2, -forward.getZ());
-        view.set(2, 3, forward.multiplyVectorScalar(position));
+        view.set(2, 3, forward.dot(position));
         
         view.set(3, 0, 0.0);
         view.set(3, 1, 0.0);
