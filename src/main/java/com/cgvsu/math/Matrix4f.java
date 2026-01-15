@@ -2,81 +2,209 @@ package com.cgvsu.math;
 
 public class Matrix4f {
 
-    private double[][] data;
+    public float m00, m01, m02, m03;
+    public float m10, m11, m12, m13;
+    public float m20, m21, m22, m23;
+    public float m30, m31, m32, m33;
 
     public Matrix4f() {
-        this.data = new double[4][4];
+        setIdentity();
+    }
+
+    public Matrix4f(float m00, float m01, float m02, float m03,
+                    float m10, float m11, float m12, float m13,
+                    float m20, float m21, float m22, float m23,
+                    float m30, float m31, float m32, float m33) {
+        this.m00 = m00; this.m01 = m01; this.m02 = m02; this.m03 = m03;
+        this.m10 = m10; this.m11 = m11; this.m12 = m12; this.m13 = m13;
+        this.m20 = m20; this.m21 = m21; this.m22 = m22; this.m23 = m23;
+        this.m30 = m30; this.m31 = m31; this.m32 = m32; this.m33 = m33;
     }
 
     public Matrix4f(double m00, double m01, double m02, double m03,
                     double m10, double m11, double m12, double m13,
                     double m20, double m21, double m22, double m23,
                     double m30, double m31, double m32, double m33) {
-        this.data = new double[4][4];
-        data[0][0] = m00; data[0][1] = m01; data[0][2] = m02; data[0][3] = m03;
-        data[1][0] = m10; data[1][1] = m11; data[1][2] = m12; data[1][3] = m13;
-        data[2][0] = m20; data[2][1] = m21; data[2][2] = m22; data[2][3] = m23;
-        data[3][0] = m30; data[3][1] = m31; data[3][2] = m32; data[3][3] = m33;
+        this.m00 = (float) m00; this.m01 = (float) m01; this.m02 = (float) m02; this.m03 = (float) m03;
+        this.m10 = (float) m10; this.m11 = (float) m11; this.m12 = (float) m12; this.m13 = (float) m13;
+        this.m20 = (float) m20; this.m21 = (float) m21; this.m22 = (float) m22; this.m23 = (float) m23;
+        this.m30 = (float) m30; this.m31 = (float) m31; this.m32 = (float) m32; this.m33 = (float) m33;
     }
 
     public Matrix4f(float[] matrix) {
-        //TODO: конструктор создает матрицу из одномерного массива float
+        if (matrix == null) {
+            throw new IllegalArgumentException("Массив не может быть null");
+        }
+        if (matrix.length < 16) {
+            throw new IllegalArgumentException("Массив должен содержать минимум 16 элементов");
+        }
+        // Массив интерпретируется как матрица в порядке row-major
+        this.m00 = matrix[0];  this.m01 = matrix[1];  this.m02 = matrix[2];  this.m03 = matrix[3];
+        this.m10 = matrix[4];  this.m11 = matrix[5];  this.m12 = matrix[6];  this.m13 = matrix[7];
+        this.m20 = matrix[8];  this.m21 = matrix[9];  this.m22 = matrix[10]; this.m23 = matrix[11];
+        this.m30 = matrix[12]; this.m31 = matrix[13]; this.m32 = matrix[14]; this.m33 = matrix[15];
     }
 
     public Matrix4f(double[] matrix) {
-        //TODO: конструктор создает матрицу из одномерного массива
+        if (matrix == null) {
+            throw new IllegalArgumentException("Массив не может быть null");
+        }
+        if (matrix.length < 16) {
+            throw new IllegalArgumentException("Массив должен содержать минимум 16 элементов");
+        }
+        // Массив интерпретируется как матрица в порядке row-major
+        this.m00 = (float) matrix[0];  this.m01 = (float) matrix[1];  this.m02 = (float) matrix[2];  this.m03 = (float) matrix[3];
+        this.m10 = (float) matrix[4];  this.m11 = (float) matrix[5];  this.m12 = (float) matrix[6];  this.m13 = (float) matrix[7];
+        this.m20 = (float) matrix[8];  this.m21 = (float) matrix[9];  this.m22 = (float) matrix[10]; this.m23 = (float) matrix[11];
+        this.m30 = (float) matrix[12]; this.m31 = (float) matrix[13]; this.m32 = (float) matrix[14]; this.m33 = (float) matrix[15];
+    }
+
+    public void setIdentity() {
+        m00 = 1.0f; m01 = 0.0f; m02 = 0.0f; m03 = 0.0f;
+        m10 = 0.0f; m11 = 1.0f; m12 = 0.0f; m13 = 0.0f;
+        m20 = 0.0f; m21 = 0.0f; m22 = 1.0f; m23 = 0.0f;
+        m30 = 0.0f; m31 = 0.0f; m32 = 0.0f; m33 = 1.0f;
     }
 
     public static Matrix4f identity() {
         Matrix4f result = new Matrix4f();
-        result.data[0][0] = 1.0;
-        result.data[1][1] = 1.0;
-        result.data[2][2] = 1.0;
-        result.data[3][3] = 1.0;
+        result.setIdentity();
         return result;
+    }
+
+    public void setZero() {
+        m00 = 0.0f; m01 = 0.0f; m02 = 0.0f; m03 = 0.0f;
+        m10 = 0.0f; m11 = 0.0f; m12 = 0.0f; m13 = 0.0f;
+        m20 = 0.0f; m21 = 0.0f; m22 = 0.0f; m23 = 0.0f;
+        m30 = 0.0f; m31 = 0.0f; m32 = 0.0f; m33 = 0.0f;
     }
 
     public static Matrix4f zero() {
-        return new Matrix4f();
-    }
-
-    public double get(int row, int col) {
-        if (row < 0 || row >= 4 || col < 0 || col >= 4) {
-            throw new IndexOutOfBoundsException("Индекс выходит за границы матрицы 4x4");
-        }
-        return data[row][col];
-    }
-
-    public void set(int row, int col, double value) {
-        if (row < 0 || row >= 4 || col < 0 || col >= 4) {
-            throw new IndexOutOfBoundsException("Индекс выходит за границы матрицы 4x4");
-        }
-        data[row][col] = value;
-    }
-
-    public Matrix4f add(Matrix4f other) {
-        if (other == null) {
-            throw new IllegalArgumentException("Матрица не может быть null");
-        }
         Matrix4f result = new Matrix4f();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                result.data[i][j] = this.data[i][j] + other.data[i][j];
-            }
-        }
+        result.setZero();
         return result;
     }
 
-    public Matrix4f subtract(Matrix4f other) {
+    public float get(int row, int col) {
+        if (row < 0 || row >= 4 || col < 0 || col >= 4) {
+            throw new IndexOutOfBoundsException("Индекс выходит за границы матрицы 4x4");
+        }
+        switch (row) {
+            case 0:
+                switch (col) {
+                    case 0: return m00;
+                    case 1: return m01;
+                    case 2: return m02;
+                    case 3: return m03;
+                }
+            case 1:
+                switch (col) {
+                    case 0: return m10;
+                    case 1: return m11;
+                    case 2: return m12;
+                    case 3: return m13;
+                }
+            case 2:
+                switch (col) {
+                    case 0: return m20;
+                    case 1: return m21;
+                    case 2: return m22;
+                    case 3: return m23;
+                }
+            case 3:
+                switch (col) {
+                    case 0: return m30;
+                    case 1: return m31;
+                    case 2: return m32;
+                    case 3: return m33;
+                }
+        }
+        return 0.0f;
+    }
+
+    public void set(int row, int col, float value) {
+        if (row < 0 || row >= 4 || col < 0 || col >= 4) {
+            throw new IndexOutOfBoundsException("Индекс выходит за границы матрицы 4x4");
+        }
+        switch (row) {
+            case 0:
+                switch (col) {
+                    case 0: m00 = value; break;
+                    case 1: m01 = value; break;
+                    case 2: m02 = value; break;
+                    case 3: m03 = value; break;
+                }
+                break;
+            case 1:
+                switch (col) {
+                    case 0: m10 = value; break;
+                    case 1: m11 = value; break;
+                    case 2: m12 = value; break;
+                    case 3: m13 = value; break;
+                }
+                break;
+            case 2:
+                switch (col) {
+                    case 0: m20 = value; break;
+                    case 1: m21 = value; break;
+                    case 2: m22 = value; break;
+                    case 3: m23 = value; break;
+                }
+                break;
+            case 3:
+                switch (col) {
+                    case 0: m30 = value; break;
+                    case 1: m31 = value; break;
+                    case 2: m32 = value; break;
+                    case 3: m33 = value; break;
+                }
+                break;
+        }
+    }
+
+    public void set(int row, int col, double value) {
+        set(row, col, (float) value);
+    }
+
+    public void add(Matrix4f other) {
         if (other == null) {
             throw new IllegalArgumentException("Матрица не может быть null");
         }
-        Matrix4f result = new Matrix4f();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                result.data[i][j] = this.data[i][j] - other.data[i][j];
-            }
+        this.m00 += other.m00; this.m01 += other.m01; this.m02 += other.m02; this.m03 += other.m03;
+        this.m10 += other.m10; this.m11 += other.m11; this.m12 += other.m12; this.m13 += other.m13;
+        this.m20 += other.m20; this.m21 += other.m21; this.m22 += other.m22; this.m23 += other.m23;
+        this.m30 += other.m30; this.m31 += other.m31; this.m32 += other.m32; this.m33 += other.m33;
+    }
+
+    public Matrix4f add(Matrix4f other, Matrix4f result) {
+        if (other == null || result == null) {
+            throw new IllegalArgumentException("Матрица не может быть null");
         }
+        result.m00 = this.m00 + other.m00; result.m01 = this.m01 + other.m01; result.m02 = this.m02 + other.m02; result.m03 = this.m03 + other.m03;
+        result.m10 = this.m10 + other.m10; result.m11 = this.m11 + other.m11; result.m12 = this.m12 + other.m12; result.m13 = this.m13 + other.m13;
+        result.m20 = this.m20 + other.m20; result.m21 = this.m21 + other.m21; result.m22 = this.m22 + other.m22; result.m23 = this.m23 + other.m23;
+        result.m30 = this.m30 + other.m30; result.m31 = this.m31 + other.m31; result.m32 = this.m32 + other.m32; result.m33 = this.m33 + other.m33;
+        return result;
+    }
+
+    public void subtract(Matrix4f other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Матрица не может быть null");
+        }
+        this.m00 -= other.m00; this.m01 -= other.m01; this.m02 -= other.m02; this.m03 -= other.m03;
+        this.m10 -= other.m10; this.m11 -= other.m11; this.m12 -= other.m12; this.m13 -= other.m13;
+        this.m20 -= other.m20; this.m21 -= other.m21; this.m22 -= other.m22; this.m23 -= other.m23;
+        this.m30 -= other.m30; this.m31 -= other.m31; this.m32 -= other.m32; this.m33 -= other.m33;
+    }
+
+    public Matrix4f subtract(Matrix4f other, Matrix4f result) {
+        if (other == null || result == null) {
+            throw new IllegalArgumentException("Матрица не может быть null");
+        }
+        result.m00 = this.m00 - other.m00; result.m01 = this.m01 - other.m01; result.m02 = this.m02 - other.m02; result.m03 = this.m03 - other.m03;
+        result.m10 = this.m10 - other.m10; result.m11 = this.m11 - other.m11; result.m12 = this.m12 - other.m12; result.m13 = this.m13 - other.m13;
+        result.m20 = this.m20 - other.m20; result.m21 = this.m21 - other.m21; result.m22 = this.m22 - other.m22; result.m23 = this.m23 - other.m23;
+        result.m30 = this.m30 - other.m30; result.m31 = this.m31 - other.m31; result.m32 = this.m32 - other.m32; result.m33 = this.m33 - other.m33;
         return result;
     }
 
@@ -84,32 +212,29 @@ public class Matrix4f {
         if (vector == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
         }
-        double x = data[0][0] * vector.getX() + data[0][1] * vector.getY() + 
-                   data[0][2] * vector.getZ() + data[0][3] * vector.getW();
-        double y = data[1][0] * vector.getX() + data[1][1] * vector.getY() + 
-                   data[1][2] * vector.getZ() + data[1][3] * vector.getW();
-        double z = data[2][0] * vector.getX() + data[2][1] * vector.getY() + 
-                   data[2][2] * vector.getZ() + data[2][3] * vector.getW();
-        double w = data[3][0] * vector.getX() + data[3][1] * vector.getY() + 
-                   data[3][2] * vector.getZ() + data[3][3] * vector.getW();
+        double x = m00 * vector.getX() + m01 * vector.getY() +
+                m02 * vector.getZ() + m03 * vector.getW();
+        double y = m10 * vector.getX() + m11 * vector.getY() +
+                m12 * vector.getZ() + m13 * vector.getW();
+        double z = m20 * vector.getX() + m21 * vector.getY() +
+                m22 * vector.getZ() + m23 * vector.getW();
+        double w = m30 * vector.getX() + m31 * vector.getY() +
+                m32 * vector.getZ() + m33 * vector.getW();
         return new Vector4f(x, y, z, w);
     }
 
-    public static Vector3f multiplyMatrix4ByVector3(final javax.vecmath.Matrix4f matrix, final Vector3f vertex) {
-        final double x = (vertex.getX() * matrix.m00) + (vertex.getY() * matrix.m10) + (vertex.getZ() * matrix.m20) + matrix.m30;
-        final double y = (vertex.getX() * matrix.m01) + (vertex.getY() * matrix.m11) + (vertex.getZ() * matrix.m21) + matrix.m31;
-        final double z = (vertex.getX() * matrix.m02) + (vertex.getY() * matrix.m12) + (vertex.getZ() * matrix.m22) + matrix.m32;
-        final double w = (vertex.getX() * matrix.m03) + (vertex.getY() * matrix.m13) + (vertex.getZ() * matrix.m23) + matrix.m33;
+    public static Vector3f multiplyMatrix4ByVector3(final Matrix4f matrix, final Vector3f vertex) {
+        final float x = (float) ((vertex.getX() * matrix.m00) + (vertex.getY() * matrix.m10) + (vertex.getZ() * matrix.m20) + matrix.m30);
+        final float y = (float) ((vertex.getX() * matrix.m01) + (vertex.getY() * matrix.m11) + (vertex.getZ() * matrix.m21) + matrix.m31);
+        final float z = (float) ((vertex.getX() * matrix.m02) + (vertex.getY() * matrix.m12) + (vertex.getZ() * matrix.m22) + matrix.m32);
+        final float w = (float) ((vertex.getX() * matrix.m03) + (vertex.getY() * matrix.m13) + (vertex.getZ() * matrix.m23) + matrix.m33);
         return new Vector3f(x / w, y / w, z / w);
-//        return new javax.vecmath.Vector3f(x / w, y / w, z / w);
     }
 
-    /**
-     * Умножает матрицу на вектор-столбец Vector3 (для аффинных преобразований)
-     * Вектор расширяется до Vector4 с w=1, затем преобразуется и проецируется обратно
-     * @param vector вектор 3D
-     * @return преобразованный вектор 3D
-     */
+    public static javax.vecmath.Point2f vertexToPoint(final Vector3f vertex, final int width, final int height) {
+        return new javax.vecmath.Point2f((float) (vertex.getX() * width + width / 2.0F), (float) (-vertex.getY() * height + height / 2.0F));
+    }
+
     public Vector3f transformVector(Vector3f vector) {
         if (vector == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
@@ -119,203 +244,209 @@ public class Matrix4f {
         return toVector3(result);
     }
 
-    public Matrix4f multiplyMatrix(Matrix4f other) {
+    public void multiply(Matrix4f other) {
         if (other == null) {
             throw new IllegalArgumentException("Матрица не может быть null");
         }
-        Matrix4f result = new Matrix4f();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                double sum = 0.0;
-                for (int k = 0; k < 4; k++) {
-                    sum += this.data[i][k] * other.data[k][j];
-                }
-                result.data[i][j] = sum;
-            }
+        float t00 = m00 * other.m00 + m01 * other.m10 + m02 * other.m20 + m03 * other.m30;
+        float t01 = m00 * other.m01 + m01 * other.m11 + m02 * other.m21 + m03 * other.m31;
+        float t02 = m00 * other.m02 + m01 * other.m12 + m02 * other.m22 + m03 * other.m32;
+        float t03 = m00 * other.m03 + m01 * other.m13 + m02 * other.m23 + m03 * other.m33;
+
+        float t10 = m10 * other.m00 + m11 * other.m10 + m12 * other.m20 + m13 * other.m30;
+        float t11 = m10 * other.m01 + m11 * other.m11 + m12 * other.m21 + m13 * other.m31;
+        float t12 = m10 * other.m02 + m11 * other.m12 + m12 * other.m22 + m13 * other.m32;
+        float t13 = m10 * other.m03 + m11 * other.m13 + m12 * other.m23 + m13 * other.m33;
+
+        float t20 = m20 * other.m00 + m21 * other.m10 + m22 * other.m20 + m23 * other.m30;
+        float t21 = m20 * other.m01 + m21 * other.m11 + m22 * other.m21 + m23 * other.m31;
+        float t22 = m20 * other.m02 + m21 * other.m12 + m22 * other.m22 + m23 * other.m32;
+        float t23 = m20 * other.m03 + m21 * other.m13 + m22 * other.m23 + m23 * other.m33;
+
+        float t30 = m30 * other.m00 + m31 * other.m10 + m32 * other.m20 + m33 * other.m30;
+        float t31 = m30 * other.m01 + m31 * other.m11 + m32 * other.m21 + m33 * other.m31;
+        float t32 = m30 * other.m02 + m31 * other.m12 + m32 * other.m22 + m33 * other.m32;
+        float t33 = m30 * other.m03 + m31 * other.m13 + m32 * other.m23 + m33 * other.m33;
+
+        m00 = t00; m01 = t01; m02 = t02; m03 = t03;
+        m10 = t10; m11 = t11; m12 = t12; m13 = t13;
+        m20 = t20; m21 = t21; m22 = t22; m23 = t23;
+        m30 = t30; m31 = t31; m32 = t32; m33 = t33;
+    }
+
+    public Matrix4f multiply(Matrix4f other, Matrix4f result) {
+        if (other == null || result == null) {
+            throw new IllegalArgumentException("Матрица не может быть null");
         }
+        result.m00 = m00 * other.m00 + m01 * other.m10 + m02 * other.m20 + m03 * other.m30;
+        result.m01 = m00 * other.m01 + m01 * other.m11 + m02 * other.m21 + m03 * other.m31;
+        result.m02 = m00 * other.m02 + m01 * other.m12 + m02 * other.m22 + m03 * other.m32;
+        result.m03 = m00 * other.m03 + m01 * other.m13 + m02 * other.m23 + m03 * other.m33;
+
+        result.m10 = m10 * other.m00 + m11 * other.m10 + m12 * other.m20 + m13 * other.m30;
+        result.m11 = m10 * other.m01 + m11 * other.m11 + m12 * other.m21 + m13 * other.m31;
+        result.m12 = m10 * other.m02 + m11 * other.m12 + m12 * other.m22 + m13 * other.m32;
+        result.m13 = m10 * other.m03 + m11 * other.m13 + m12 * other.m23 + m13 * other.m33;
+
+        result.m20 = m20 * other.m00 + m21 * other.m10 + m22 * other.m20 + m23 * other.m30;
+        result.m21 = m20 * other.m01 + m21 * other.m11 + m22 * other.m21 + m23 * other.m31;
+        result.m22 = m20 * other.m02 + m21 * other.m12 + m22 * other.m22 + m23 * other.m32;
+        result.m23 = m20 * other.m03 + m21 * other.m13 + m22 * other.m23 + m23 * other.m33;
+
+        result.m30 = m30 * other.m00 + m31 * other.m10 + m32 * other.m20 + m33 * other.m30;
+        result.m31 = m30 * other.m01 + m31 * other.m11 + m32 * other.m21 + m33 * other.m31;
+        result.m32 = m30 * other.m02 + m31 * other.m12 + m32 * other.m22 + m33 * other.m32;
+        result.m33 = m30 * other.m03 + m31 * other.m13 + m32 * other.m23 + m33 * other.m33;
         return result;
     }
 
-    public Matrix4f transpose() {
+    public Matrix4f multiplyMatrix(Matrix4f other) {
         Matrix4f result = new Matrix4f();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                result.data[i][j] = this.data[j][i];
-            }
+        multiply(other, result);
+        return result;
+    }
+
+    public void transpose() {
+        float temp;
+        temp = m01; m01 = m10; m10 = temp;
+        temp = m02; m02 = m20; m20 = temp;
+        temp = m03; m03 = m30; m30 = temp;
+        temp = m12; m12 = m21; m21 = temp;
+        temp = m13; m13 = m31; m31 = temp;
+        temp = m23; m23 = m32; m32 = temp;
+    }
+
+    public Matrix4f transpose(Matrix4f result) {
+        if (result == null) {
+            throw new IllegalArgumentException("Матрица результата не может быть null");
         }
+        result.m00 = m00; result.m01 = m10; result.m02 = m20; result.m03 = m30;
+        result.m10 = m01; result.m11 = m11; result.m12 = m21; result.m13 = m31;
+        result.m20 = m02; result.m21 = m12; result.m22 = m22; result.m23 = m32;
+        result.m30 = m03; result.m31 = m13; result.m32 = m23; result.m33 = m33;
         return result;
     }
 
     public double determinant() {
-        return determinant(this.data);
+        return (m00 * (m11 * (m22 * m33 - m23 * m32) - m12 * (m21 * m33 - m23 * m31) + m13 * (m21 * m32 - m22 * m31)) -
+                m01 * (m10 * (m22 * m33 - m23 * m32) - m12 * (m20 * m33 - m23 * m30) + m13 * (m20 * m32 - m22 * m30)) +
+                m02 * (m10 * (m21 * m33 - m23 * m31) - m11 * (m20 * m33 - m23 * m30) + m13 * (m20 * m31 - m21 * m30)) -
+                m03 * (m10 * (m21 * m32 - m22 * m31) - m11 * (m20 * m32 - m22 * m30) + m12 * (m20 * m31 - m21 * m30)));
     }
 
-    private double determinant(double[][] matrix) {
-        int n = matrix.length;
-
-        if (n == 1) {
-            return matrix[0][0];
-        }
-
-        if (n == 2) {
-            return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
-        }
-
-        double det = 0;
-
-        for (int col = 0; col < n; col++) {
-            double[][] minor = getMinor(matrix, 0, col);
-            det += Math.pow(-1, col) * matrix[0][col] * determinant(minor);
-        }
-        return det;
+    public void setScale(double sx, double sy, double sz) {
+        setIdentity();
+        m00 = (float) sx;
+        m11 = (float) sy;
+        m22 = (float) sz;
     }
 
-
-    private double[][] getMinor(double[][] matrix, int rowToRemove, int colToRemove) {
-        int n = matrix.length;
-        double[][] minor = new double[n - 1][n - 1];
-        int r = 0;
-
-        for (int i = 0; i < n; i++) {
-            if (i == rowToRemove) continue;
-            int c = 0;
-            for (int j = 0; j < n; j++) {
-                if (j == colToRemove) continue;
-                minor[r][c] = matrix[i][j];
-                c++;
-            }
-            r++;
-        }
-        return minor;
-    }
-
-    /**
-     * Создает матрицу масштабирования для векторов-столбцов
-     * @param sx масштаб по оси X
-     * @param sy масштаб по оси Y
-     * @param sz масштаб по оси Z
-     * @return матрица масштабирования
-     */
     public static Matrix4f scale(double sx, double sy, double sz) {
         Matrix4f result = identity();
-        result.data[0][0] = sx;
-        result.data[1][1] = sy;
-        result.data[2][2] = sz;
+        result.m00 = (float) sx;
+        result.m11 = (float) sy;
+        result.m22 = (float) sz;
         return result;
     }
 
-    /**
-     * Создает матрицу масштабирования по всем осям
-     * @param scale единый масштаб для всех осей
-     * @return матрица масштабирования
-     */
     public static Matrix4f scale(double scale) {
         return scale(scale, scale, scale);
     }
 
-    /**
-     * Создает матрицу вращения вокруг оси X для векторов-столбцов
-     * @param angle угол в радианах
-     * @return матрица вращения
-     */
+    public void setRotateX(double angle) {
+        setIdentity();
+        float cos = (float) Math.cos(angle);
+        float sin = (float) Math.sin(angle);
+        m11 = cos;
+        m12 = -sin;
+        m21 = sin;
+        m22 = cos;
+    }
+
     public static Matrix4f rotateX(double angle) {
         Matrix4f result = identity();
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
-        result.data[1][1] = cos;
-        result.data[1][2] = -sin;
-        result.data[2][1] = sin;
-        result.data[2][2] = cos;
+        result.setRotateX(angle);
         return result;
     }
 
-    /**
-     * Создает матрицу вращения вокруг оси Y для векторов-столбцов
-     * @param angle угол в радианах
-     * @return матрица вращения
-     */
+    public void setRotateY(double angle) {
+        setIdentity();
+        float cos = (float) Math.cos(angle);
+        float sin = (float) Math.sin(angle);
+        m00 = cos;
+        m02 = sin;
+        m20 = -sin;
+        m22 = cos;
+    }
+
     public static Matrix4f rotateY(double angle) {
         Matrix4f result = identity();
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
-        result.data[0][0] = cos;
-        result.data[0][2] = sin;
-        result.data[2][0] = -sin;
-        result.data[2][2] = cos;
+        result.setRotateY(angle);
         return result;
     }
 
-    /**
-     * Создает матрицу вращения вокруг оси Z для векторов-столбцов
-     * @param angle угол в радианах
-     * @return матрица вращения
-     */
+    public void setRotateZ(double angle) {
+        setIdentity();
+        float cos = (float) Math.cos(angle);
+        float sin = (float) Math.sin(angle);
+        m00 = cos;
+        m01 = -sin;
+        m10 = sin;
+        m11 = cos;
+    }
+
     public static Matrix4f rotateZ(double angle) {
         Matrix4f result = identity();
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
-        result.data[0][0] = cos;
-        result.data[0][1] = -sin;
-        result.data[1][0] = sin;
-        result.data[1][1] = cos;
+        result.setRotateZ(angle);
         return result;
     }
 
-    /**
-     * Создает матрицу вращения вокруг произвольной оси для векторов-столбцов
-     * @param axis ось вращения (должна быть нормализована)
-     * @param angle угол в радианах
-     * @return матрица вращения
-     */
-    public static Matrix4f rotate(Vector3f axis, double angle) {
+    public void setRotate(Vector3f axis, double angle) {
         if (axis == null) {
             throw new IllegalArgumentException("Ось не может быть null");
         }
         Vector3f normalizedAxis = axis.normalize();
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
-        double oneMinusCos = 1.0 - cos;
-        
-        double x = normalizedAxis.getX();
-        double y = normalizedAxis.getY();
-        double z = normalizedAxis.getZ();
-        
+        float cos = (float) Math.cos(angle);
+        float sin = (float) Math.sin(angle);
+        float oneMinusCos = 1.0f - cos;
+
+        float x = (float) normalizedAxis.getX();
+        float y = (float) normalizedAxis.getY();
+        float z = (float) normalizedAxis.getZ();
+
+        setIdentity();
+        m00 = cos + x * x * oneMinusCos;
+        m01 = x * y * oneMinusCos - z * sin;
+        m02 = x * z * oneMinusCos + y * sin;
+
+        m10 = y * x * oneMinusCos + z * sin;
+        m11 = cos + y * y * oneMinusCos;
+        m12 = y * z * oneMinusCos - x * sin;
+
+        m20 = z * x * oneMinusCos - y * sin;
+        m21 = z * y * oneMinusCos + x * sin;
+        m22 = cos + z * z * oneMinusCos;
+    }
+
+    public static Matrix4f rotate(Vector3f axis, double angle) {
         Matrix4f result = identity();
-        result.data[0][0] = cos + x * x * oneMinusCos;
-        result.data[0][1] = x * y * oneMinusCos - z * sin;
-        result.data[0][2] = x * z * oneMinusCos + y * sin;
-        
-        result.data[1][0] = y * x * oneMinusCos + z * sin;
-        result.data[1][1] = cos + y * y * oneMinusCos;
-        result.data[1][2] = y * z * oneMinusCos - x * sin;
-        
-        result.data[2][0] = z * x * oneMinusCos - y * sin;
-        result.data[2][1] = z * y * oneMinusCos + x * sin;
-        result.data[2][2] = cos + z * z * oneMinusCos;
-        
+        result.setRotate(axis, angle);
         return result;
     }
 
-    /**
-     * Создает матрицу переноса для векторов-столбцов
-     * @param tx перенос по оси X
-     * @param ty перенос по оси Y
-     * @param tz перенос по оси Z
-     * @return матрица переноса
-     */
+    public void setTranslate(double tx, double ty, double tz) {
+        setIdentity();
+        m03 = (float) tx;
+        m13 = (float) ty;
+        m23 = (float) tz;
+    }
+
     public static Matrix4f translate(double tx, double ty, double tz) {
         Matrix4f result = identity();
-        result.data[0][3] = tx;
-        result.data[1][3] = ty;
-        result.data[2][3] = tz;
+        result.setTranslate(tx, ty, tz);
         return result;
     }
 
-    /**
-     * Создает матрицу переноса из вектора
-     * @param translation вектор переноса
-     * @return матрица переноса
-     */
     public static Matrix4f translate(Vector3f translation) {
         if (translation == null) {
             throw new IllegalArgumentException("Вектор переноса не может быть null");
@@ -323,11 +454,6 @@ public class Matrix4f {
         return translate(translation.getX(), translation.getY(), translation.getZ());
     }
 
-    /**
-     * Преобразует Vector3 в Vector4 (добавляет w=1 для аффинных преобразований)
-     * @param v вектор 3D
-     * @return вектор 4D
-     */
     public static Vector4f toVector4(Vector3f v) {
         if (v == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
@@ -335,11 +461,6 @@ public class Matrix4f {
         return new Vector4f(v.getX(), v.getY(), v.getZ(), 1.0);
     }
 
-    /**
-     * Преобразует Vector4 в Vector3 (проекция обратно в 3D, деление на w)
-     * @param v вектор 4D
-     * @return вектор 3D
-     */
     public static Vector3f toVector3(Vector4f v) {
         if (v == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
@@ -350,19 +471,37 @@ public class Matrix4f {
         return new Vector3f(v.getX() / v.getW(), v.getY() / v.getW(), v.getZ() / v.getW());
     }
 
+    public void set(Matrix4f other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Матрица не может быть null");
+        }
+        this.m00 = other.m00; this.m01 = other.m01; this.m02 = other.m02; this.m03 = other.m03;
+        this.m10 = other.m10; this.m11 = other.m11; this.m12 = other.m12; this.m13 = other.m13;
+        this.m20 = other.m20; this.m21 = other.m21; this.m22 = other.m22; this.m23 = other.m23;
+        this.m30 = other.m30; this.m31 = other.m31; this.m32 = other.m32; this.m33 = other.m33;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         Matrix4f matrix4F = (Matrix4f) obj;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                if (Math.abs(this.data[i][j] - matrix4F.data[i][j]) >= 1e-9) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return Math.abs(this.m00 - matrix4F.m00) < 1e-6f &&
+                Math.abs(this.m01 - matrix4F.m01) < 1e-6f &&
+                Math.abs(this.m02 - matrix4F.m02) < 1e-6f &&
+                Math.abs(this.m03 - matrix4F.m03) < 1e-6f &&
+                Math.abs(this.m10 - matrix4F.m10) < 1e-6f &&
+                Math.abs(this.m11 - matrix4F.m11) < 1e-6f &&
+                Math.abs(this.m12 - matrix4F.m12) < 1e-6f &&
+                Math.abs(this.m13 - matrix4F.m13) < 1e-6f &&
+                Math.abs(this.m20 - matrix4F.m20) < 1e-6f &&
+                Math.abs(this.m21 - matrix4F.m21) < 1e-6f &&
+                Math.abs(this.m22 - matrix4F.m22) < 1e-6f &&
+                Math.abs(this.m23 - matrix4F.m23) < 1e-6f &&
+                Math.abs(this.m30 - matrix4F.m30) < 1e-6f &&
+                Math.abs(this.m31 - matrix4F.m31) < 1e-6f &&
+                Math.abs(this.m32 - matrix4F.m32) < 1e-6f &&
+                Math.abs(this.m33 - matrix4F.m33) < 1e-6f;
     }
 }
 
