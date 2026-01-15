@@ -46,6 +46,12 @@ public class Vector3f {
         return new Vector3f(this.x + other.x, this.y + other.y, this.z + other.z);
     }
 
+    public void sub(Vector3f a, Vector3f b) {
+        this.x = a.x - b.x;
+        this.y = a.y - b.y;
+        this.z = a.z - b.z;
+    }
+
     public Vector3f subtract(Vector3f other) {
         if (other == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
@@ -53,7 +59,7 @@ public class Vector3f {
         return new Vector3f(this.x - other.x, this.y - other.y, this.z - other.z);
     }
 
-    public Vector3f multiply(double scalar) {
+    public Vector3f scale(double scalar) {
         return new Vector3f(this.x * scalar, this.y * scalar, this.z * scalar);
     }
 
@@ -106,6 +112,18 @@ public class Vector3f {
             this.z * other.x - this.x * other.z,
             this.x * other.y - this.y * other.x
         );
+    }
+
+    public void cross(Vector3f a, Vector3f b) {
+        // Используем временные переменные на случай, если
+        // a или b — это тот же самый объект, что и this.
+        float resX = (float) (a.getY() * b.getZ() - a.getZ() * b.getY());
+        float resY = (float) (a.getZ() * b.getX() - a.getX() * b.getZ());
+        float resZ = (float) (a.getX() * b.getY() - a.getY() * b.getX());
+
+        this.setX(resX);
+        this.setY(resY);
+        this.setZ(resZ);
     }
 }
 

@@ -19,6 +19,14 @@ public class Matrix4f {
         data[3][0] = m30; data[3][1] = m31; data[3][2] = m32; data[3][3] = m33;
     }
 
+    public Matrix4f(float[] matrix) {
+        //TODO: конструктор создает матрицу из одномерного массива float
+    }
+
+    public Matrix4f(double[] matrix) {
+        //TODO: конструктор создает матрицу из одномерного массива
+    }
+
     public static Matrix4f identity() {
         Matrix4f result = new Matrix4f();
         result.data[0][0] = 1.0;

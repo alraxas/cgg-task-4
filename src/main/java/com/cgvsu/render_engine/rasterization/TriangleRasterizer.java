@@ -5,9 +5,6 @@ import com.cgvsu.math.Vector3f;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
-//import javax.vecmath.Vector2f;
-//import javax.vecmath.Vector3f;
-
 public class TriangleRasterizer {
     public static final float EPSILON = 1e-6f;
 

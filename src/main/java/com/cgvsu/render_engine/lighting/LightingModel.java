@@ -1,8 +1,9 @@
 package com.cgvsu.render_engine.lighting;
 
+import com.cgvsu.math.Vector3f;
 import com.cgvsu.render_engine.Camera;
 import javafx.scene.paint.Color;
-import javax.vecmath.Vector3f;
+//import javax.vecmath.Vector3f;
 
 public class LightingModel {
 
@@ -16,18 +17,15 @@ public class LightingModel {
     private LightingType lightingType = LightingType.AMBIENT_DIFFUSE;
     private Camera camera;
 
-    // Параметры освещения
     private float ambientIntensity = 0.2f;    // Фоновое освещение
     private float diffuseIntensity = 0.7f;    // Рассеянное освещение
     private float specularIntensity = 0.5f;   // Зеркальное освещение
     private float shininess = 32.0f;          // Блеск
 
-    // Цвета освещения
     private Color ambientColor = Color.WHITE;
     private Color diffuseColor = Color.WHITE;
     private Color specularColor = Color.WHITE;
 
-    // Положение источника света (может быть привязано к камере)
     private Vector3f lightPosition;
     private Vector3f lightDirection;
 
@@ -41,10 +39,10 @@ public class LightingModel {
         this.camera = camera;
         // Привязываем источник света к позиции камеры
         if (camera != null) {
-            this.lightPosition = new Vector3f(camera.getPosition());
+            this.lightPosition = new Vector3f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ());
             // Направляем свет от камеры на цель
-            this.lightDirection = new Vector3f(camera.getTarget());
-            this.lightDirection.sub(camera.getPosition());
+            this.lightDirection = new Vector3f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ());
+            this.lightDirection.subtract(camera.getPosition());
             this.lightDirection.normalize();
         }
     }
@@ -58,14 +56,14 @@ public class LightingModel {
         normal.normalize();
 
         // Рассеянное освещение (Lambert)
-        float diffuse = Math.max(0, -lightDirection.dot(normal));
+        float diffuse = (float) Math.max(0, -lightDirection.dot(normal));
 
         // Зеркальное освещение (Phong)
         float specular = 0.0f;
         if (camera != null && specularIntensity > 0) {
             // Вектор от точки к камере
-            Vector3f viewDir = new Vector3f(camera.getPosition());
-            viewDir.sub(position);
+            Vector3f viewDir = new Vector3f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ());
+            viewDir.subtract(position);
             viewDir.normalize();
 
             // Вектор отражения
@@ -107,7 +105,7 @@ public class LightingModel {
         double ambientB = baseColor.getBlue() * ambientIntensity;
 
         // Рассеянное освещение
-        float diffuse = Math.max(0, -lightDirection.dot(normal));
+        float diffuse = (float) Math.max(0, -lightDirection.dot(normal));
         double diffuseR = baseColor.getRed() * diffuse * diffuseIntensity;
         double diffuseG = baseColor.getGreen() * diffuse * diffuseIntensity;
         double diffuseB = baseColor.getBlue() * diffuse * diffuseIntensity;
@@ -115,8 +113,8 @@ public class LightingModel {
         // Зеркальное освещение
         double specularR = 0, specularG = 0, specularB = 0;
         if (camera != null && specularIntensity > 0) {
-            Vector3f viewDir = new Vector3f(camera.getPosition());
-            viewDir.sub(position);
+            Vector3f viewDir = new Vector3f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ());
+            viewDir.subtract(position);
             viewDir.normalize();
 
             Vector3f reflectDir = reflect(lightDirection, normal);
@@ -138,14 +136,13 @@ public class LightingModel {
 
     private Vector3f reflect(Vector3f lightDir, Vector3f normal) {
         // r = 2 * (n·l) * n - l
-        float dot = normal.dot(lightDir);
-        Vector3f result = new Vector3f(normal);
+        float dot = (float) normal.dot(lightDir);
+        Vector3f result = new Vector3f(normal.getX(), normal.getY(), normal.getZ());
         result.scale(2 * dot);
-        result.sub(lightDir);
+        result.subtract(lightDir);
         return result;
     }
 
-    // Геттеры и сеттеры
     public void setLightingType(LightingType type) {
         this.lightingType = type;
     }

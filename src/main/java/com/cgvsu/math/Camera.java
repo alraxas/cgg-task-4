@@ -133,8 +133,8 @@ public class Camera {
      */
     public void moveForward() {
         Vector3f direction = target.subtract(position).normalize();
-        position = position.add(direction.multiply(moveSpeed));
-        target = target.add(direction.multiply(moveSpeed));
+        position = position.add(direction.scale(moveSpeed));
+        target = target.add(direction.scale(moveSpeed));
     }
 
     /**
@@ -142,8 +142,8 @@ public class Camera {
      */
     public void moveBackward() {
         Vector3f direction = position.subtract(target).normalize();
-        position = position.add(direction.multiply(moveSpeed));
-        target = target.add(direction.multiply(moveSpeed));
+        position = position.add(direction.scale(moveSpeed));
+        target = target.add(direction.scale(moveSpeed));
     }
 
     /**
@@ -152,9 +152,9 @@ public class Camera {
     public void moveLeft() {
         Vector3f forward = target.subtract(position).normalize();
         Vector3f right = forward.multiplyVectorVector(up).normalize();
-        Vector3f left = right.multiply(-1.0);
-        position = position.add(left.multiply(moveSpeed));
-        target = target.add(left.multiply(moveSpeed));
+        Vector3f left = right.scale(-1.0);
+        position = position.add(left.scale(moveSpeed));
+        target = target.add(left.scale(moveSpeed));
     }
 
     /**
@@ -163,24 +163,24 @@ public class Camera {
     public void moveRight() {
         Vector3f forward = target.subtract(position).normalize();
         Vector3f right = forward.multiplyVectorVector(up).normalize();
-        position = position.add(right.multiply(moveSpeed));
-        target = target.add(right.multiply(moveSpeed));
+        position = position.add(right.scale(moveSpeed));
+        target = target.add(right.scale(moveSpeed));
     }
 
     /**
      * Движение камеры вверх
      */
     public void moveUp() {
-        position = position.add(up.multiply(moveSpeed));
-        target = target.add(up.multiply(moveSpeed));
+        position = position.add(up.scale(moveSpeed));
+        target = target.add(up.scale(moveSpeed));
     }
 
     /**
      * Движение камеры вниз
      */
     public void moveDown() {
-        position = position.add(up.multiply(-moveSpeed));
-        target = target.add(up.multiply(-moveSpeed));
+        position = position.add(up.scale(-moveSpeed));
+        target = target.add(up.scale(-moveSpeed));
     }
 
     /**

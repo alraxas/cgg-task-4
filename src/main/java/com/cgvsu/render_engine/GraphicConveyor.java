@@ -1,5 +1,8 @@
 package com.cgvsu.render_engine;
-import javax.vecmath.*;
+//import javax.vecmath.*;
+
+import com.cgvsu.math.Matrix4f;
+import com.cgvsu.math.Vector3f;
 
 public class GraphicConveyor {
 
@@ -30,10 +33,10 @@ public class GraphicConveyor {
         resultY.normalize();
         resultZ.normalize();
 
-        float[] matrix = new float[]{
-                resultX.x, resultY.x, resultZ.x, 0,
-                resultX.y, resultY.y, resultZ.y, 0,
-                resultX.z, resultY.z, resultZ.z, 0,
+        double[] matrix = new double[]{
+                resultX.getX(), resultY.getX(), resultZ.getX(), 0,
+                resultX.getY(), resultY.getY(), resultZ.getY(), 0,
+                resultX.getZ(), resultY.getZ(), resultZ.getZ(), 0,
                 -resultX.dot(eye), -resultY.dot(eye), -resultZ.dot(eye), 1};
         return new Matrix4f(matrix);
     }
