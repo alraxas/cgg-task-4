@@ -1,7 +1,8 @@
 package com.cgvsu.render_engine.scene;
 
+import com.cgvsu.math.Vector3f;
 import com.cgvsu.render_engine.Camera;
-import javax.vecmath.Vector3f;
+//import javax.vecmath.Vector3f;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

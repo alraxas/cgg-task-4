@@ -18,12 +18,12 @@ public class Vector2f {
         this.y = y;
     }
 
-    public double getX() {
-        return x;
+    public float getX() {
+        return (float) x;
     }
 
-    public double getY() {
-        return y;
+    public float getY() {
+        return (float) y;
     }
 
     public Vector2f add(Vector2f other) {
@@ -71,8 +71,7 @@ public class Vector2f {
     }
 
     public static double edgeFunction(Vector2f a, Vector2f b, Vector2f c) {
-        return ((c.x - a.x) * (b.y - a.y) -
-                (c.y - a.y) * (b.x - a.x));
+        return ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x));
     }
 
     public static Point2f vertexToPoint(final Vector3f vertex, final int width, final int height) {

@@ -1,186 +1,176 @@
 package com.cgvsu.render_engine.lighting;
 
 import com.cgvsu.math.Vector3f;
-import com.cgvsu.render_engine.Camera;
 import javafx.scene.paint.Color;
-//import javax.vecmath.Vector3f;
 
 public class LightingModel {
 
-    public enum LightingType {
-        FLAT,          // Плоское освещение
-        GOURAUD,       // Освещение по Гуро
-        PHONG,         // Освещение по Фонгу (упрощенное)
-        AMBIENT_DIFFUSE // Фоновое + рассеянное
-    }
+    // Чистая функция расчета освещения
+    public static Color calculate(
+            LightSource light,
+            Material material,
+            Vector3f position,
+            Vector3f normal,
+            Vector3f viewDir,
+            Color baseColor) {
 
-    private LightingType lightingType = LightingType.AMBIENT_DIFFUSE;
-    private Camera camera;
+        // Нормализуем векторы
+        normal = normal.normalize();
+        viewDir = viewDir.normalize();
 
-    private float ambientIntensity = 0.2f;    // Фоновое освещение
-    private float diffuseIntensity = 0.7f;    // Рассеянное освещение
-    private float specularIntensity = 0.5f;   // Зеркальное освещение
-    private float shininess = 32.0f;          // Блеск
+        // Получаем цвет материала
+        Color materialColor = baseColor;
 
-    private Color ambientColor = Color.WHITE;
-    private Color diffuseColor = Color.WHITE;
-    private Color specularColor = Color.WHITE;
+        // Компоненты освещения
+        Color ambient = calculateAmbient(light, material, materialColor);
+        Color diffuse = calculateDiffuse(light, material, normal, materialColor);
+        Color specular = calculateSpecular(light, material, normal, viewDir);
 
-    private Vector3f lightPosition;
-    private Vector3f lightDirection;
+        // Затухание и фактор прожектора
+        float attenuation = 1.0f;
+        float spotFactor = 1.0f;
 
-    public LightingModel() {
-        this.lightPosition = new Vector3f(0, 10, 10);
-        this.lightDirection = new Vector3f(0, -1, -1);
-        this.lightDirection.normalize();
-    }
+        if (light.getType() != LightSource.LightType.DIRECTIONAL) {
+            float distance = (float) position.distance(light.getPosition());
+            attenuation = light.getAttenuation(distance);
 
-    public void setCamera(Camera camera) {
-        this.camera = camera;
-        // Привязываем источник света к позиции камеры
-        if (camera != null) {
-            this.lightPosition = new Vector3f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ());
-            // Направляем свет от камеры на цель
-            this.lightDirection = new Vector3f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ());
-            this.lightDirection.subtract(camera.getPosition());
-            this.lightDirection.normalize();
-        }
-    }
-
-    public float calculateLightIntensity(Vector3f normal, Vector3f position) {
-        if (lightingType == LightingType.FLAT) {
-            return 1.0f;
+            if (light.getType() == LightSource.LightType.SPOT) {
+                Vector3f lightToPoint = position.subtract(light.getPosition());
+                spotFactor = light.getSpotFactor(lightToPoint);
+            }
         }
 
-        // Нормализуем нормаль
-        normal.normalize();
+        // Суммируем компоненты
+        double r = ambient.getRed() +
+                (diffuse.getRed() + specular.getRed()) * attenuation * spotFactor;
+        double g = ambient.getGreen() +
+                (diffuse.getGreen() + specular.getGreen()) * attenuation * spotFactor;
+        double b = ambient.getBlue() +
+                (diffuse.getBlue() + specular.getBlue()) * attenuation * spotFactor;
 
-        // Рассеянное освещение (Lambert)
-        float diffuse = (float) Math.max(0, -lightDirection.dot(normal));
+        // Ограничиваем значения
+        r = Math.min(1.0, Math.max(0, r));
+        g = Math.min(1.0, Math.max(0, g));
+        b = Math.min(1.0, Math.max(0, b));
 
-        // Зеркальное освещение (Phong)
-        float specular = 0.0f;
-        if (camera != null && specularIntensity > 0) {
-            // Вектор от точки к камере
-            Vector3f viewDir = new Vector3f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ());
-            viewDir.subtract(position);
-            viewDir.normalize();
-
-            // Вектор отражения
-            Vector3f reflectDir = reflect(lightDirection, normal);
-            reflectDir.normalize();
-
-            specular = (float) Math.pow(Math.max(0, viewDir.dot(reflectDir)), shininess);
-        }
-
-        // Итоговая интенсивность
-        return ambientIntensity +
-                diffuseIntensity * diffuse +
-                specularIntensity * specular;
+        return new Color(r, g, b, materialColor.getOpacity());
     }
 
-    public Color applyLighting(Color baseColor, float intensity) {
-        // Ограничиваем интенсивность
-        intensity = Math.max(0.1f, Math.min(1.0f, intensity));
-
-        // Применяем интенсивность к цвету
-        return Color.color(
-                baseColor.getRed() * intensity,
-                baseColor.getGreen() * intensity,
-                baseColor.getBlue() * intensity,
-                baseColor.getOpacity()
-        );
+    private static Color calculateAmbient(LightSource light, Material material, Color materialColor) {
+        double r = materialColor.getRed() * material.getAmbientCoefficient();
+        double g = materialColor.getGreen() * material.getAmbientCoefficient();
+        double b = materialColor.getBlue() * material.getAmbientCoefficient();
+        return new Color(r, g, b, materialColor.getOpacity());
     }
 
-    public Color applyFullLighting(Color baseColor, Vector3f normal, Vector3f position) {
-        if (lightingType == LightingType.FLAT) {
-            return baseColor;
+    private static Color calculateDiffuse(LightSource light, Material material,
+                                          Vector3f normal, Color materialColor) {
+        Vector3f lightDir = light.getDirectionFrom(normal.scale(-1));
+
+        // Ламбертовское рассеивание
+        float NdotL = (float) Math.max(0, normal.dot(lightDir));
+
+        if (NdotL <= 0) {
+            return Color.rgb(0, 0, 0, materialColor.getOpacity());
         }
 
-        normal.normalize();
+        double lightR = light.getColor().getRed() * light.getIntensity();
+        double lightG = light.getColor().getGreen() * light.getIntensity();
+        double lightB = light.getColor().getBlue() * light.getIntensity();
 
-        // Фоновое освещение
-        double ambientR = baseColor.getRed() * ambientIntensity;
-        double ambientG = baseColor.getGreen() * ambientIntensity;
-        double ambientB = baseColor.getBlue() * ambientIntensity;
+        double r = materialColor.getRed() * lightR * material.getDiffuseCoefficient() * NdotL;
+        double g = materialColor.getGreen() * lightG * material.getDiffuseCoefficient() * NdotL;
+        double b = materialColor.getBlue() * lightB * material.getDiffuseCoefficient() * NdotL;
 
-        // Рассеянное освещение
-        float diffuse = (float) Math.max(0, -lightDirection.dot(normal));
-        double diffuseR = baseColor.getRed() * diffuse * diffuseIntensity;
-        double diffuseG = baseColor.getGreen() * diffuse * diffuseIntensity;
-        double diffuseB = baseColor.getBlue() * diffuse * diffuseIntensity;
+        return new Color(r, g, b, materialColor.getOpacity());
+    }
 
-        // Зеркальное освещение
+    private static Color calculateSpecular(LightSource light, Material material,
+                                           Vector3f normal, Vector3f viewDir) {
+        if (material.getSpecularCoefficient() <= 0) {
+            return Color.rgb(0, 0, 0, 1.0);
+        }
+
+        Vector3f lightDir = light.getDirectionFrom(normal.scale(-1));
+        float NdotL = (float) normal.dot(lightDir);
+
+        if (NdotL <= 0) {
+            return Color.rgb(0, 0, 0, 1.0);
+        }
+
+        // Вектор отражения (по модели Фонга)
+        Vector3f reflectDir = reflect(lightDir.scale(-1), normal);
+
+        // Скалярное произведение отражения и направления взгляда
+        float RdotV = (float) Math.max(0, reflectDir.dot(viewDir));
+
+        // Зеркальная составляющая
+        float specularFactor = (float) Math.pow(RdotV, material.getShininess());
+
+        double lightR = light.getColor().getRed() * light.getIntensity();
+        double lightG = light.getColor().getGreen() * light.getIntensity();
+        double lightB = light.getColor().getBlue() * light.getIntensity();
+
+        double materialR = material.getSpecularColor().getRed();
+        double materialG = material.getSpecularColor().getGreen();
+        double materialB = material.getSpecularColor().getBlue();
+
+        double r = lightR * materialR * material.getSpecularCoefficient() * specularFactor;
+        double g = lightG * materialG * material.getSpecularCoefficient() * specularFactor;
+        double b = lightB * materialB * material.getSpecularCoefficient() * specularFactor;
+
+        return new Color(r, g, b, 1.0);
+    }
+
+    private static Vector3f reflect(Vector3f incident, Vector3f normal) {
+        // r = i - 2*(i·n)*n
+        float dot = (float) incident.dot(normal);
+        return incident.subtract(normal.scale(2 * dot));
+    }
+
+    // Упрощенный метод для одного источника света
+    public static Color calculateSimple(
+            Vector3f lightDir,
+            Material material,
+            Vector3f normal,
+            Vector3f viewDir,
+            Color baseColor) {
+
+        normal = normal.normalize();
+        viewDir = viewDir.normalize();
+        lightDir = lightDir.normalize();
+
+        // Ambient
+        double ambientR = baseColor.getRed() * material.getAmbientCoefficient();
+        double ambientG = baseColor.getGreen() * material.getAmbientCoefficient();
+        double ambientB = baseColor.getBlue() * material.getAmbientCoefficient();
+
+        // Diffuse (Lambert)
+        float NdotL = (float) Math.max(0, normal.dot(lightDir.scale(-1)));
+        double diffuseR = baseColor.getRed() * material.getDiffuseCoefficient() * NdotL;
+        double diffuseG = baseColor.getGreen() * material.getDiffuseCoefficient() * NdotL;
+        double diffuseB = baseColor.getBlue() * material.getDiffuseCoefficient() * NdotL;
+
+        // Specular (Blinn-Phong упрощенный)
         double specularR = 0, specularG = 0, specularB = 0;
-        if (camera != null && specularIntensity > 0) {
-            Vector3f viewDir = new Vector3f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ());
-            viewDir.subtract(position);
-            viewDir.normalize();
+        if (NdotL > 0 && material.getSpecularCoefficient() > 0) {
+            Vector3f halfway = lightDir.scale(-1).add(viewDir).normalize();
+            float NdotH = (float) Math.max(0, normal.dot(halfway));
+            float specularFactor = (float) Math.pow(NdotH, material.getShininess());
 
-            Vector3f reflectDir = reflect(lightDirection, normal);
-            reflectDir.normalize();
-
-            float specular = (float) Math.pow(Math.max(0, viewDir.dot(reflectDir)), shininess);
-            specularR = specularColor.getRed() * specular * specularIntensity;
-            specularG = specularColor.getGreen() * specular * specularIntensity;
-            specularB = specularColor.getBlue() * specular * specularIntensity;
+            specularR = material.getSpecularColor().getRed() *
+                    material.getSpecularCoefficient() * specularFactor;
+            specularG = material.getSpecularColor().getGreen() *
+                    material.getSpecularCoefficient() * specularFactor;
+            specularB = material.getSpecularColor().getBlue() *
+                    material.getSpecularCoefficient() * specularFactor;
         }
 
-        // Суммируем все компоненты
-        double finalR = Math.min(1.0, ambientR + diffuseR + specularR);
-        double finalG = Math.min(1.0, ambientG + diffuseG + specularG);
-        double finalB = Math.min(1.0, ambientB + diffuseB + specularB);
+        // Итоговый цвет
+        double r = Math.min(1.0, ambientR + diffuseR + specularR);
+        double g = Math.min(1.0, ambientG + diffuseG + specularG);
+        double b = Math.min(1.0, ambientB + diffuseB + specularB);
 
-        return new Color(finalR, finalG, finalB, baseColor.getOpacity());
-    }
-
-    private Vector3f reflect(Vector3f lightDir, Vector3f normal) {
-        // r = 2 * (n·l) * n - l
-        float dot = (float) normal.dot(lightDir);
-        Vector3f result = new Vector3f(normal.getX(), normal.getY(), normal.getZ());
-        result.scale(2 * dot);
-        result.subtract(lightDir);
-        return result;
-    }
-
-    public void setLightingType(LightingType type) {
-        this.lightingType = type;
-    }
-
-    public void setAmbientIntensity(float intensity) {
-        this.ambientIntensity = intensity;
-    }
-
-    public void setDiffuseIntensity(float intensity) {
-        this.diffuseIntensity = intensity;
-    }
-
-    public void setSpecularIntensity(float intensity) {
-        this.specularIntensity = intensity;
-    }
-
-    public void setShininess(float shininess) {
-        this.shininess = shininess;
-    }
-
-    public void setAmbientColor(Color color) {
-        this.ambientColor = color;
-    }
-
-    public void setDiffuseColor(Color color) {
-        this.diffuseColor = color;
-    }
-
-    public void setSpecularColor(Color color) {
-        this.specularColor = color;
-    }
-
-    public void setLightPosition(Vector3f position) {
-        this.lightPosition = position;
-    }
-
-    public void setLightDirection(Vector3f direction) {
-        this.lightDirection = direction;
-        this.lightDirection.normalize();
+        return new Color(r, g, b, baseColor.getOpacity());
     }
 }

@@ -9,25 +9,23 @@ import com.cgvsu.render_engine.Camera;
 import com.cgvsu.render_engine.rasterization.ZBuffer;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-//import javax.vecmath.Matrix4f;
 import javax.vecmath.Point2f;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.cgvsu.render_engine.GraphicConveyor.*;
+import static com.cgvsu.render_engine.GraphicConveyor.rotateScaleTranslate;
 
 public class WireframeRenderer {
-    private ZBuffer lineZBuffer;
 
-    public void renderWireframe(
+    public void renderWireframeWithZBuffer(
             GraphicsContext gc,
             Camera camera,
             Model mesh,
             int width,
             int height,
-            Color lineColor) {
-
-        lineZBuffer = new ZBuffer(width, height);
+            Color lineColor,
+            float lineThickness,
+            ZBuffer zBuffer) {
 
         Matrix4f modelMatrix = rotateScaleTranslate();
         Matrix4f viewMatrix = camera.getViewMatrix();
@@ -37,8 +35,12 @@ public class WireframeRenderer {
         modelViewProjectionMatrix.multiply(viewMatrix);
         modelViewProjectionMatrix.multiply(projectionMatrix);
 
+        // Настройка контекста
+        gc.setStroke(lineColor);
+        gc.setLineWidth(lineThickness);
+
         // Рендерим все полигоны
-        for (Polygon polygon : mesh.polygons) {
+        for (Polygon polygon : mesh.getPolygons()) {
             List<Integer> vertexIndices = polygon.getVertexIndices();
             int nVertices = vertexIndices.size();
 
@@ -49,43 +51,48 @@ public class WireframeRenderer {
             List<Float> depths = new ArrayList<>();
 
             for (int i = 0; i < nVertices; i++) {
-                Vector3f vertex = mesh.vertices.get(vertexIndices.get(i));
-                Vector3f vec = new Vector3f(
-                        (float) vertex.getX(),
-                        (float) vertex.getY(),
-                        (float) vertex.getZ()
-                );
-
-                Vector3f transformed = Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vec);
+                Vector3f vertex = mesh.getVertices().get(vertexIndices.get(i));
+                Vector3f transformed = Matrix4f.multiplyMatrix4ByVector3(modelViewProjectionMatrix, vertex);
                 Point2f screenPoint = Vector2f.vertexToPoint(transformed, width, height);
 
                 screenPoints.add(screenPoint);
                 depths.add(transformed.getZ());
             }
 
-            // Рисуем линии полигона
+            // Рисуем линии полигона с Z-буфером
             for (int i = 0; i < nVertices; i++) {
                 int next = (i + 1) % nVertices;
-                drawLineWithDepth(
+                drawLineWithZBuffer(
                         screenPoints.get(i), depths.get(i),
                         screenPoints.get(next), depths.get(next),
-                        gc, lineColor
+                        gc, lineColor, zBuffer
                 );
             }
         }
     }
 
-    private void drawLineWithDepth(
+    private void drawLineWithZBuffer(
             Point2f p1, float z1,
             Point2f p2, float z2,
             GraphicsContext gc,
-            Color color) {
+            Color color,
+            ZBuffer zBuffer) {
 
-        // Алгоритм Брезенхема с Z-буфером
-        int x1 = (int) p1.x;
-        int y1 = (int) p1.y;
-        int x2 = (int) p2.x;
-        int y2 = (int) p2.y;
+        int x1 = (int) Math.round(p1.x);
+        int y1 = (int) Math.round(p1.y);
+        int x2 = (int) Math.round(p2.x);
+        int y2 = (int) Math.round(p2.y);
+
+        // Используем алгоритм Брезенхема с Z-буфером
+        bresenhamWithZBuffer(x1, y1, z1, x2, y2, z2, gc, color, zBuffer);
+    }
+
+    private void bresenhamWithZBuffer(
+            int x1, int y1, float z1,
+            int x2, int y2, float z2,
+            GraphicsContext gc,
+            Color color,
+            ZBuffer zBuffer) {
 
         int dx = Math.abs(x2 - x1);
         int dy = Math.abs(y2 - y1);
@@ -102,11 +109,11 @@ public class WireframeRenderer {
         float step = 1.0f / Math.max(dx, dy);
 
         while (true) {
-            // Интерполируем Z
+            // Линейная интерполяция Z
             float z = z1 * (1 - t) + z2 * t;
 
-            // Проверяем Z-буфер
-            if (lineZBuffer.testAndSet(x, y, z)) {
+            // Проверка Z-буфера
+            if (zBuffer == null || zBuffer.testAndSet(x, y, z)) {
                 gc.getPixelWriter().setColor(x, y, color);
             }
 

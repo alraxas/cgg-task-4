@@ -15,16 +15,16 @@ public class Vector3f {
         this.z = z;
     }
 
-    public double getX() {
-        return x;
+    public float getX() {
+        return (float) x;
     }
 
-    public double getY() {
-        return y;
+    public float getY() {
+        return (float) y;
     }
 
     public float getZ() {
-        return z;
+        return (float) z;
     }
 
     public void setX(double x) {
@@ -52,6 +52,12 @@ public class Vector3f {
         this.z = a.z - b.z;
     }
 
+    public void sub(Vector3f a) {
+        this.x -= a.x;
+        this.y -= a.y;
+        this.z -= a.z;
+    }
+
     public Vector3f subtract(Vector3f other) {
         if (other == null) {
             throw new IllegalArgumentException("Вектор не может быть null");
@@ -62,6 +68,13 @@ public class Vector3f {
     public Vector3f scale(double scalar) {
         return new Vector3f(this.x * scalar, this.y * scalar, this.z * scalar);
     }
+
+    public void multiply(double scalar) {
+        this.x *= scalar;
+        this.y *= scalar;
+        this.z *= scalar;
+    }
+
 
     public Vector3f divide(double scalar) {
         if (scalar == 0.0) {
@@ -80,6 +93,17 @@ public class Vector3f {
             throw new ArithmeticException("Невозможно нормализовать нулевой вектор");
         }
         return new Vector3f(x / len, y / len, z / len);
+    }
+
+    //TODO: переписать чтобы void был ведзе либо хз, у меня все с расчетом а такой метод написано
+    public void normalize1() {
+        double len = length();
+        if (len == 0.0) {
+            throw new ArithmeticException("Невозможно нормализовать нулевой вектор");
+        }
+        this.x /= len;
+        this.y /= len;
+        this.z /= len;
     }
 
     public static void normalizeVector(Vector3f vector) {
@@ -125,6 +149,15 @@ public class Vector3f {
         this.setY(resY);
         this.setZ(resZ);
     }
+
+    public double distance(Vector3f other) {
+        double dx = this.x - other.x;
+        double dy = this.y - other.y;
+        double dz = this.z - other.z;
+
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
 
     public static Vector3f calculatePolygonNormal(Vector3f v1, Vector3f v2, Vector3f v3) {
         Vector3f edge1 = new Vector3f(

@@ -2,8 +2,7 @@ package com.cgvsu.render_engine.texture;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
-import java.util.HashMap;
-import java.util.Map;
+import javafx.scene.paint.Color;
 
 public class Texture {
     private final Image image;
@@ -11,110 +10,115 @@ public class Texture {
     private final int width;
     private final int height;
 
-    private static final Map<String, Texture> loadedTextures = new HashMap<>();
-
     public Texture(Image image) {
+        if (image == null) {
+            throw new IllegalArgumentException("Image cannot be null");
+        }
+
         this.image = image;
         this.pixelReader = image.getPixelReader();
         this.width = (int) image.getWidth();
         this.height = (int) image.getHeight();
-    }
 
-    public static Texture loadTexture(String path) {
-        if (loadedTextures.containsKey(path)) {
-            return loadedTextures.get(path);
-        }
-
-        try {
-            Image image = new Image("file:" + path);
-            Texture texture = new Texture(image);
-            loadedTextures.put(path, texture);
-            return texture;
-        } catch (Exception e) {
-            System.err.println("Failed to load texture: " + path);
-            return null;
+        if (pixelReader == null) {
+            throw new IllegalStateException("Cannot get PixelReader from image");
         }
     }
 
-    public javafx.scene.paint.Color getColor(float u, float v) {
-        // Обработка координат текстуры (wrap или clamp)
-        u = u - (float) Math.floor(u); // Wrap
-        v = v - (float) Math.floor(v); // Wrap
+    public Texture(String path) {
+        this(new Image("file:" + path));
+    }
 
-        // Преобразование в координаты пикселей
-        int x = (int) (u * (width - 1));
-        int y = (int) ((1 - v) * (height - 1)); // Инвертируем V координату
+    public Color getColor(float u, float v) {
+        return getColor(u, v, false);
+    }
 
-        // Ограничиваем координаты
+    // Метод с выбором фильтрации
+    public Color getColor(float u, float v, boolean useBilinear) {
+        if (useBilinear) {
+            return getColorBilinear(u, v);
+        }
+        return getColorNearest(u, v);
+    }
+
+    // Метод ближайшего соседа (быстрее)
+    private Color getColorNearest(float u, float v) {
+        // Обработка координат (wrap mode)
+        u = u - (float) Math.floor(u);
+        v = v - (float) Math.floor(v);
+
+        // Конвертируем в координаты пикселей
+        int x = Math.min((int) (u * width), width - 1);
+        int y = Math.min((int) ((1 - v) * height), height - 1);
+
+        // Ограничение на случай ошибок округления
         x = Math.max(0, Math.min(x, width - 1));
         y = Math.max(0, Math.min(y, height - 1));
 
         return pixelReader.getColor(x, y);
     }
 
-    public javafx.scene.paint.Color getColorBilinear(float u, float v) {
+    // Билинейная фильтрация
+    public Color getColorBilinear(float u, float v) {
+        // Wrap coordinates
         u = u - (float) Math.floor(u);
         v = v - (float) Math.floor(v);
 
+        // Convert to pixel coordinates with sub-pixel precision
         float x = u * (width - 1);
         float y = (1 - v) * (height - 1);
 
+        // Get four surrounding pixels
         int x1 = (int) Math.floor(x);
         int y1 = (int) Math.floor(y);
         int x2 = Math.min(x1 + 1, width - 1);
         int y2 = Math.min(y1 + 1, height - 1);
 
+        // Calculate interpolation factors
         float dx = x - x1;
         float dy = y - y1;
+        float dx1 = 1 - dx;
+        float dy1 = 1 - dy;
 
-        javafx.scene.paint.Color c00 = pixelReader.getColor(x1, y1);
-        javafx.scene.paint.Color c10 = pixelReader.getColor(x2, y1);
-        javafx.scene.paint.Color c01 = pixelReader.getColor(x1, y2);
-        javafx.scene.paint.Color c11 = pixelReader.getColor(x2, y2);
+        // Get colors of four pixels
+        Color c00 = pixelReader.getColor(x1, y1);
+        Color c10 = pixelReader.getColor(x2, y1);
+        Color c01 = pixelReader.getColor(x1, y2);
+        Color c11 = pixelReader.getColor(x2, y2);
 
-        // Билинейная интерполяция
-        return bilinearInterpolate(c00, c10, c01, c11, dx, dy);
-    }
+        // Bilinear interpolation
+        double r = c00.getRed() * dx1 * dy1 +
+                c10.getRed() * dx * dy1 +
+                c01.getRed() * dx1 * dy +
+                c11.getRed() * dx * dy;
 
-    private javafx.scene.paint.Color bilinearInterpolate(
-            javafx.scene.paint.Color c00, javafx.scene.paint.Color c10,
-            javafx.scene.paint.Color c01, javafx.scene.paint.Color c11,
-            float dx, float dy) {
+        double g = c00.getGreen() * dx1 * dy1 +
+                c10.getGreen() * dx * dy1 +
+                c01.getGreen() * dx1 * dy +
+                c11.getGreen() * dx * dy;
 
-        double r00 = c00.getRed();
-        double g00 = c00.getGreen();
-        double b00 = c00.getBlue();
+        double b = c00.getBlue() * dx1 * dy1 +
+                c10.getBlue() * dx * dy1 +
+                c01.getBlue() * dx1 * dy +
+                c11.getBlue() * dx * dy;
 
-        double r10 = c10.getRed();
-        double g10 = c10.getGreen();
-        double b10 = c10.getBlue();
+        // Alpha (if needed)
+        double a = c00.getOpacity();
 
-        double r01 = c01.getRed();
-        double g01 = c01.getGreen();
-        double b01 = c01.getBlue();
-
-        double r11 = c11.getRed();
-        double g11 = c11.getGreen();
-        double b11 = c11.getBlue();
-
-        // Интерполяция по X
-        double r0 = r00 * (1 - dx) + r10 * dx;
-        double g0 = g00 * (1 - dx) + g10 * dx;
-        double b0 = b00 * (1 - dx) + b10 * dx;
-
-        double r1 = r01 * (1 - dx) + r11 * dx;
-        double g1 = g01 * (1 - dx) + g11 * dx;
-        double b1 = b01 * (1 - dx) + b11 * dx;
-
-        // Интерполяция по Y
-        double r = r0 * (1 - dy) + r1 * dy;
-        double g = g0 * (1 - dy) + g1 * dy;
-        double b = b0 * (1 - dy) + b1 * dy;
-
-        return new javafx.scene.paint.Color(r, g, b, 1.0);
+        return new Color(
+                Math.max(0, Math.min(1, r)),
+                Math.max(0, Math.min(1, g)),
+                Math.max(0, Math.min(1, b)),
+                a
+        );
     }
 
     public int getWidth() { return width; }
     public int getHeight() { return height; }
     public Image getImage() { return image; }
+    public PixelReader getPixelReader() { return pixelReader; }
+
+    public boolean isValid() {
+        return image != null && !image.isError() && pixelReader != null;
+    }
 }

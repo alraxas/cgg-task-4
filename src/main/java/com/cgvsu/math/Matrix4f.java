@@ -250,6 +250,18 @@ public class Matrix4f {
         return new Vector3f(x / w, y / w, z / w);
     }
 
+    public static Vector3f transformNormal(Vector3f normal, Matrix4f matrix) {
+        // Для нормалей используется транспонированная обратная матрица,
+        // но для упрощения используем верхнюю левую 3x3 часть
+        float x = (float) (normal.getX() * matrix.m00 + normal.getY() * matrix.m10 + normal.getZ() * matrix.m20);
+        float y = (float) (normal.getX() * matrix.m01 + normal.getY() * matrix.m11 + normal.getZ() * matrix.m21);
+        float z = (float) (normal.getX() * matrix.m02 + normal.getY() * matrix.m12 + normal.getZ() * matrix.m22);
+
+        Vector3f result = new Vector3f(x, y, z);
+        result.normalize1();
+        return result;
+    }
+
     public static javax.vecmath.Point2f vertexToPoint(final Vector3f vertex, final int width, final int height) {
         return new javax.vecmath.Point2f((float) (vertex.getX() * width + width / 2.0F), (float) (-vertex.getY() * height + height / 2.0F));
     }
@@ -471,6 +483,47 @@ public class Matrix4f {
             throw new IllegalArgumentException("Вектор переноса не может быть null");
         }
         return translate(translation.getX(), translation.getY(), translation.getZ());
+    }
+
+    public boolean invert() {
+        // Используем алгоритм с вычислением определителя и алгебраических дополнений
+        double det = determinant();
+
+        // Если определитель близок к нулю, матрица необратима
+        if (Math.abs(det) < 1e-9) {
+            return false;
+        }
+
+        double invDet = 1.0 / det;
+
+        // Вычисляем алгебраические дополнения (cofactors)
+        float t00 = (float) (invDet * (m11 * (m22 * m33 - m23 * m32) - m12 * (m21 * m33 - m23 * m31) + m13 * (m21 * m32 - m22 * m31)));
+        float t01 = (float) (-invDet * (m01 * (m22 * m33 - m23 * m32) - m02 * (m21 * m33 - m23 * m31) + m03 * (m21 * m32 - m22 * m31)));
+        float t02 = (float) (invDet * (m01 * (m12 * m33 - m13 * m32) - m02 * (m11 * m33 - m13 * m31) + m03 * (m11 * m32 - m12 * m31)));
+        float t03 = (float) (-invDet * (m01 * (m12 * m23 - m13 * m22) - m02 * (m11 * m23 - m13 * m21) + m03 * (m11 * m22 - m12 * m21)));
+
+        float t10 = (float) (-invDet * (m10 * (m22 * m33 - m23 * m32) - m12 * (m20 * m33 - m23 * m30) + m13 * (m20 * m32 - m22 * m30)));
+        float t11 = (float) (invDet * (m00 * (m22 * m33 - m23 * m32) - m02 * (m20 * m33 - m23 * m30) + m03 * (m20 * m32 - m22 * m30)));
+        float t12 = (float) (-invDet * (m00 * (m12 * m33 - m13 * m32) - m02 * (m10 * m33 - m13 * m30) + m03 * (m10 * m32 - m12 * m30)));
+        float t13 = (float) (invDet * (m00 * (m12 * m23 - m13 * m22) - m02 * (m10 * m23 - m13 * m20) + m03 * (m10 * m22 - m12 * m20)));
+
+        float t20 = (float) (invDet * (m10 * (m21 * m33 - m23 * m31) - m11 * (m20 * m33 - m23 * m30) + m13 * (m20 * m31 - m21 * m30)));
+        float t21 = (float) (-invDet * (m00 * (m21 * m33 - m23 * m31) - m01 * (m20 * m33 - m23 * m30) + m03 * (m20 * m31 - m21 * m30)));
+        float t22 = (float) (invDet * (m00 * (m11 * m33 - m13 * m31) - m01 * (m10 * m33 - m13 * m30) + m03 * (m10 * m31 - m11 * m30)));
+        float t23 = (float) (-invDet * (m00 * (m11 * m23 - m13 * m21) - m01 * (m10 * m23 - m13 * m20) + m03 * (m10 * m21 - m11 * m20)));
+
+        float t30 = (float) (-invDet * (m10 * (m21 * m32 - m22 * m31) - m11 * (m20 * m32 - m22 * m30) + m12 * (m20 * m31 - m21 * m30)));
+        float t31 = (float) (invDet * (m00 * (m21 * m32 - m22 * m31) - m01 * (m20 * m32 - m22 * m30) + m02 * (m20 * m31 - m21 * m30)));
+        float t32 = (float) (-invDet * (m00 * (m11 * m32 - m12 * m31) - m01 * (m10 * m32 - m12 * m30) + m02 * (m10 * m31 - m11 * m30)));
+        float t33 = (float) (invDet * (m00 * (m11 * m22 - m12 * m21) - m01 * (m10 * m22 - m12 * m20) + m02 * (m10 * m21 - m11 * m20)));
+
+        // Обновляем текущую матрицу обратной
+        m00 = t00; m01 = t01; m02 = t02; m03 = t03;
+        m10 = t10; m11 = t11; m12 = t12; m13 = t13;
+        m20 = t20; m21 = t21; m22 = t22; m23 = t23;
+        m30 = t30; m31 = t31; m32 = t32; m33 = t33;
+
+        return true;
     }
 
     public static Vector4f toVector4(Vector3f v) {

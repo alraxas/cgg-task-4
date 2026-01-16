@@ -30,10 +30,10 @@ public class SceneRenderer {
         }
 
         // Рендерим все модели сцены
-        for (Model model : scene.getModels()) {
-            Texture texture = scene.getTextures().isEmpty() ? null : scene.getTextures().get(0);
-            renderManager.render(gc, activeCamera, model, width, height, texture);
-        }
+//        for (Model model : scene.getModels()) {
+//            Texture texture = scene.getTextures().isEmpty() ? null : scene.getTextures().get(0);
+//            renderManager.render(gc, activeCamera, model, width, height, texture);
+//        }
 
         // Рендерим модели камер, если включено
         if (showCameras) {
@@ -81,9 +81,9 @@ public class SceneRenderer {
         return renderManager.getRenderSettings();
     }
 
-    public void setRenderSettings(RenderSettings settings) {
-        renderManager.setRenderSettings(settings);
-    }
+//    public void setRenderSettings(RenderSettings settings) {
+//        renderManager.setRenderSettings(settings);
+//    }
 
     public Scene getScene() {
         return scene;
