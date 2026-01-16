@@ -4,9 +4,9 @@ import com.cgvsu.math.Vector3f;
 import com.cgvsu.model.Model;
 import com.cgvsu.objreader.ObjReader;
 import com.cgvsu.render_engine.Camera;
-import com.cgvsu.render_engine.RenderEngine;
-import com.cgvsu.render_engine.lighting.LightingModel;
-import com.cgvsu.render_engine.rendering.RenderSettings;
+import com.cgvsu.render_engine.processing.ModelProcessor;
+import com.cgvsu.render_engine.rendering.UnifiedRenderer;
+import com.cgvsu.render_engine.texture.Texture;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -55,26 +55,24 @@ public class GuiController {
     private Label statusLabel;
 
     private Model mesh = null;
-    private RenderEngine renderEngine;
+    private UnifiedRenderer renderer;
     private Camera camera;
     private Timeline timeline;
-
-    // Настройки рендеринга
-    private RenderSettings renderSettings;
-    private LightingModel lightingModel;
+    private ModelProcessor modelProcessor;
 
     // Текущий цвет заливки
     private Color fillColor = Color.LIGHTBLUE;
-
     // Масштаб модели
     private float modelScale = 1.0f;
+    // Текущая текстура
+    private Texture currentTexture = null;
 
     @FXML
     private void initialize() {
         // Инициализация компонентов
         initUIComponents();
 
-        // Инициализация камеры (старая версия, которая работала)
+        // Инициализация камеры
         camera = new Camera(
                 new Vector3f(0, 10, 100),    // Позиция камеры
                 new Vector3f(0, 0, 0),       // Цель камеры
@@ -83,18 +81,8 @@ public class GuiController {
                 0.01F,                        // Near plane
                 100.0F                        // Far plane
         );
-
-        // Инициализация рендерера
-        renderEngine = new RenderEngine();
-
-        // Инициализация модели освещения
-        lightingModel = new LightingModel();
-        lightingModel.setAmbientIntensity(0.3f);
-        lightingModel.setDiffuseIntensity(0.7f);
-        lightingModel.setSpecularIntensity(0.5f);
-
-        // Настройка рендерера с освещением
-        renderEngine.setLightingModel(lightingModel);
+        renderer = new UnifiedRenderer();
+        modelProcessor = new ModelProcessor();
 
         // Настройка обработчиков изменения размеров canvas
         anchorPane.prefWidthProperty().addListener((ov, oldValue, newValue) -> {
@@ -133,6 +121,7 @@ public class GuiController {
 
         // Настройка ColorPicker
         colorPicker.setValue(Color.LIGHTBLUE);
+        fillColor = Color.LIGHTBLUE;
 
         // Настройка CheckBox'ов
         wireframeCheckBox.setSelected(false);
@@ -143,20 +132,19 @@ public class GuiController {
         wireframeCheckBox.setOnAction(event -> updateRenderSettings());
         textureCheckBox.setOnAction(event -> {
             updateRenderSettings();
-            if (textureCheckBox.isSelected()) {
-                updateStatus("Texture mode selected (not implemented in basic version)");
+            if (textureCheckBox.isSelected() && currentTexture == null) {
+                updateStatus("Texture mode selected - please load a texture first");
             }
         });
 
         lightingCheckBox.setOnAction(event -> {
             updateRenderSettings();
-            if (lightingCheckBox.isSelected()) {
-                updateStatus("Lighting mode selected");
-            }
+            updateStatus("Lighting mode selected");
         });
 
         colorPicker.setOnAction(event -> {
             fillColor = colorPicker.getValue();
+            renderer.setSolidColor(fillColor);
             updateStatus("Color changed to: " + fillColor.toString());
         });
 
@@ -172,78 +160,46 @@ public class GuiController {
 
         if (width <= 0 || height <= 0) return;
 
-        // Очистка canvas
-        canvas.getGraphicsContext2D().clearRect(0, 0, width, height);
-
         if (mesh != null) {
             try {
-                // Определяем режим рендеринга
-                boolean drawWireframe = wireframeCheckBox.isSelected();
-                boolean useLighting = lightingCheckBox.isSelected();
+                updateRenderSettings();
 
-                if (drawWireframe) {
-                    // Рендерим только каркас
-                    RenderEngine.renderWireframe(
-                            canvas.getGraphicsContext2D(),
-                            camera,
-                            mesh,
-                            (int) width,
-                            (int) height
-                    );
-                } else if (useLighting) {
-                    // Рендерим с освещением
-                    // Направление света (от камеры к цели)
-                    Vector3f lightDirection = new Vector3f(
-                            camera.getTarget().getX() - camera.getPosition().getX(),
-                            camera.getTarget().getY() - camera.getPosition().getY(),
-                            camera.getTarget().getZ() - camera.getPosition().getZ()
-                    );
-                    lightDirection.normalize1();
-
-                    // Обновляем освещение с текущей камерой
-                    lightingModel.setCamera(camera);
-
-                    // Рендеринг с освещением
-                    renderEngine.renderWithLighting(
-                            canvas.getGraphicsContext2D(),
-                            camera,
-                            mesh,
-                            (int) width,
-                            (int) height,
-                            fillColor,
-                            lightDirection
-                    );
-                } else {
-                    // Рендерим сплошную заливку (базовый режим)
-                    renderEngine.renderSolid(
-                            canvas.getGraphicsContext2D(),
-                            camera,
-                            mesh,
-                            (int) width,
-                            (int) height,
-                            fillColor
-                    );
-                }
+                renderer.render(
+                        canvas.getGraphicsContext2D(),
+                        camera,
+                        mesh,
+                        (int) width,
+                        (int) height
+                );
 
             } catch (Exception e) {
                 updateStatus("Rendering error: " + e.getMessage());
                 e.printStackTrace();
             }
+        } else {
+            // Если нет модели, просто очищаем экран
+            canvas.getGraphicsContext2D().clearRect(0, 0, width, height);
         }
     }
 
     private void updateRenderSettings() {
+        if (renderer == null) return;
+
+        // Обновляем все настройки рендеринга
+        renderer.getRenderSettings().setDrawWireframe(wireframeCheckBox.isSelected());
+        renderer.getRenderSettings().setUseTexture(textureCheckBox.isSelected());
+        renderer.getRenderSettings().setUseLighting(lightingCheckBox.isSelected());
+        renderer.getRenderSettings().setSolidColor(fillColor);
+
         // Обновляем статус в зависимости от выбранных опций
         StringBuilder mode = new StringBuilder("Mode: ");
 
-        if (wireframeCheckBox.isSelected()) {
-            mode.append("Wireframe ");
-        } else if (lightingCheckBox.isSelected()) {
-            mode.append("Solid with Lighting ");
-        } else if (textureCheckBox.isSelected()) {
-            mode.append("Textured ");
-        } else {
-            mode.append("Solid fill ");
+        if (wireframeCheckBox.isSelected()) mode.append("Wireframe ");
+        if (textureCheckBox.isSelected()) mode.append("Textured ");
+        if (lightingCheckBox.isSelected()) mode.append("Lit ");
+
+        if (!wireframeCheckBox.isSelected() && !textureCheckBox.isSelected() && !lightingCheckBox.isSelected()) {
+            mode.append("Solid fill");
         }
 
         updateStatus(mode.toString());
@@ -262,7 +218,7 @@ public class GuiController {
         if (statusLabel != null) {
             statusLabel.setText(message);
         }
-        System.out.println(message);
+//        System.out.println(message);
     }
 
     @FXML
@@ -288,10 +244,18 @@ public class GuiController {
                 int vertexCount = mesh.getVertices().size();
                 int polygonCount = mesh.getPolygons().size();
 
-                updateStatus(String.format(
-                        "Model loaded: %s\nVertices: %d, Polygons: %d",
-                        file.getName(), vertexCount, polygonCount));
+                mesh = modelProcessor.processModel(mesh);
 
+                int triangulatedPolygonCount = mesh.getPolygons().size();
+
+                updateStatus(String.format(
+                        "Model loaded: %s\n" +
+                                "Original: Vertices: %d, Polygons: %d\n" +
+                                "Triangulated: Polygons: %d",
+                        file.getName(),
+                        vertexCount,
+                        polygonCount,
+                        triangulatedPolygonCount));
                 // Центрирование камеры на модели
                 centerCameraOnModel();
 
@@ -343,10 +307,9 @@ public class GuiController {
         float maxSize = Math.max(sizeX, Math.max(sizeY, sizeZ));
 
         // Настраиваем камеру
-        float cameraDistance = maxSize * 2.0f; // Расстояние камеры пропорционально размеру модели
-        cameraDistance = Math.max(cameraDistance, 50.0f); // Минимальное расстояние
+        float cameraDistance = Math.max(maxSize * 2.0f, 50.0f);
 
-        camera.setPosition(new Vector3f(0, maxSize * 0.5f, cameraDistance));
+        camera.setPosition(new Vector3f(centerX, centerY + sizeY * 0.3f, centerZ + cameraDistance));
         camera.setTarget(new Vector3f(centerX, centerY, centerZ));
 
         updateStatus(String.format(
@@ -356,10 +319,6 @@ public class GuiController {
 
     @FXML
     private void onLoadTextureMenuItemClick() {
-        // Базовая реализация загрузки текстуры
-        // В полной версии нужно использовать TextureManager
-        updateStatus("Texture loading not fully implemented in basic version");
-
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.bmp"));
@@ -367,14 +326,22 @@ public class GuiController {
 
         File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
         if (file != null) {
-            updateStatus("Texture selected: " + file.getName() + " (loading not implemented)");
-            // Здесь должен быть код загрузки текстуры через TextureManager
+            try {
+                // Загружаем текстуру через UnifiedRenderer
+                renderer.loadTexture(file.getAbsolutePath());
+                textureCheckBox.setSelected(true);
+                updateRenderSettings();
+                updateStatus("Texture loaded: " + file.getName());
+
+            } catch (Exception e) {
+                updateStatus("Error loading texture: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
     @FXML
     private void onResetViewMenuItemClick() {
-        // Сброс камеры к виду по умолчанию
         if (mesh != null) {
             centerCameraOnModel();
         } else {
@@ -393,6 +360,7 @@ public class GuiController {
         scaleSlider.setValue(1.0);
         fillColor = Color.LIGHTBLUE;
         colorPicker.setValue(fillColor);
+        renderer.setSolidColor(fillColor);
 
         updateStatus("View reset");
     }
@@ -408,15 +376,16 @@ public class GuiController {
     private void onAboutAction() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("About");
-        alert.setHeaderText("3D Model Viewer");
-        alert.setContentText("Simple 3D model viewer for OBJ files\n" +
+        alert.setHeaderText("3D Model Viewer with UnifiedRenderer");
+        alert.setContentText("3D model viewer for OBJ files\n" +
                 "Features:\n" +
                 "- Load .obj models\n" +
                 "- Wireframe rendering\n" +
                 "- Solid color rendering\n" +
-                "- Basic lighting\n" +
+                "- Textures support\n" +
+                "- Lighting effects\n" +
                 "- Camera controls\n" +
-                "\nBasic Version");
+                "\nUsing UnifiedRenderer architecture");
         alert.showAndWait();
     }
 
@@ -424,37 +393,20 @@ public class GuiController {
 
     @FXML
     public void handleCameraForward(ActionEvent actionEvent) {
-        // Движение вперед - приближение к цели
-        Vector3f direction = new Vector3f(
-                camera.getTarget().getX() - camera.getPosition().getX(),
-                camera.getTarget().getY() - camera.getPosition().getY(),
-                camera.getTarget().getZ() - camera.getPosition().getZ()
-        );
-        direction.normalize1();
-        direction.scale(TRANSLATION);
-
+        Vector3f direction = new Vector3f(0, 0, -TRANSLATION);
         camera.movePosition(direction);
         updateStatus("Camera: forward");
     }
 
     @FXML
     public void handleCameraBackward(ActionEvent actionEvent) {
-        // Движение назад - отдаление от цели
-        Vector3f direction = new Vector3f(
-                camera.getPosition().getX() - camera.getTarget().getX(),
-                camera.getPosition().getY() - camera.getTarget().getY(),
-                camera.getPosition().getZ() - camera.getTarget().getZ()
-        );
-        direction.normalize1();
-        direction.scale(TRANSLATION);
-
+        Vector3f direction = new Vector3f(0, 0, TRANSLATION);
         camera.movePosition(direction);
         updateStatus("Camera: backward");
     }
 
     @FXML
     public void handleCameraLeft(ActionEvent actionEvent) {
-        // Движение влево
         Vector3f direction = new Vector3f(-TRANSLATION, 0, 0);
         camera.movePosition(direction);
         updateStatus("Camera: left");
@@ -462,7 +414,6 @@ public class GuiController {
 
     @FXML
     public void handleCameraRight(ActionEvent actionEvent) {
-        // Движение вправо
         Vector3f direction = new Vector3f(TRANSLATION, 0, 0);
         camera.movePosition(direction);
         updateStatus("Camera: right");
@@ -470,7 +421,6 @@ public class GuiController {
 
     @FXML
     public void handleCameraUp(ActionEvent actionEvent) {
-        // Движение вверх
         Vector3f direction = new Vector3f(0, TRANSLATION, 0);
         camera.movePosition(direction);
         updateStatus("Camera: up");
@@ -478,7 +428,6 @@ public class GuiController {
 
     @FXML
     public void handleCameraDown(ActionEvent actionEvent) {
-        // Движение вниз
         Vector3f direction = new Vector3f(0, -TRANSLATION, 0);
         camera.movePosition(direction);
         updateStatus("Camera: down");
@@ -486,35 +435,30 @@ public class GuiController {
 
     @FXML
     public void handleCameraRotateLeft(ActionEvent actionEvent) {
-        // Вращение камеры влево вокруг цели
         orbitCamera(0, -ROTATION);
         updateStatus("Camera: rotate left");
     }
 
     @FXML
     public void handleCameraRotateRight(ActionEvent actionEvent) {
-        // Вращение камеры вправо вокруг цели
         orbitCamera(0, ROTATION);
         updateStatus("Camera: rotate right");
     }
 
     @FXML
     public void handleCameraRotateUp(ActionEvent actionEvent) {
-        // Вращение камеры вверх
         orbitCamera(-ROTATION, 0);
         updateStatus("Camera: rotate up");
     }
 
     @FXML
     public void handleCameraRotateDown(ActionEvent actionEvent) {
-        // Вращение камеры вниз
         orbitCamera(ROTATION, 0);
         updateStatus("Camera: rotate down");
     }
 
     @FXML
     public void handleZoomIn(ActionEvent actionEvent) {
-        // Увеличение - уменьшаем FOV
         float currentFov = camera.getFov();
         camera.setFov(currentFov * 0.9f);
         updateStatus("Zoom in");
@@ -522,7 +466,6 @@ public class GuiController {
 
     @FXML
     public void handleZoomOut(ActionEvent actionEvent) {
-        // Уменьшение - увеличиваем FOV
         float currentFov = camera.getFov();
         camera.setFov(currentFov * 1.1f);
         updateStatus("Zoom out");
@@ -531,35 +474,31 @@ public class GuiController {
     // ============ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ============
 
     private void orbitCamera(float deltaPitch, float deltaYaw) {
-        // Простая орбитальная камера
         Vector3f position = camera.getPosition();
         Vector3f target = camera.getTarget();
 
-        // Вычисляем расстояние до цели
         float dx = position.getX() - target.getX();
         float dy = position.getY() - target.getY();
         float dz = position.getZ() - target.getZ();
 
         float distance = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-        // Преобразуем в сферические координаты
         float pitch = (float) Math.asin(dy / distance);
         float yaw = (float) Math.atan2(dx, dz);
 
-        // Добавляем изменения
         pitch += Math.toRadians(deltaPitch);
         yaw += Math.toRadians(deltaYaw);
 
-        // Ограничиваем pitch
         pitch = (float) Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, pitch));
 
-        // Преобразуем обратно в декартовы координаты
         float newX = target.getX() + distance * (float) (Math.sin(yaw) * Math.cos(pitch));
         float newY = target.getY() + distance * (float) Math.sin(pitch);
         float newZ = target.getZ() + distance * (float) (Math.cos(yaw) * Math.cos(pitch));
 
         camera.setPosition(new Vector3f(newX, newY, newZ));
     }
+
+    // ============ БЫСТРЫЕ КОМАНДЫ ============
 
     @FXML
     private void onWireframeOnlyAction() {
@@ -603,6 +542,7 @@ public class GuiController {
 
     @FXML
     private void onClearTextureAction() {
+        renderer.setTexture(null);
         textureCheckBox.setSelected(false);
         updateRenderSettings();
         updateStatus("Texture cleared");
@@ -610,9 +550,9 @@ public class GuiController {
 
     @FXML
     private void onToggleLightFollowCamera() {
-        if (lightingModel != null) {
-            boolean current = lightingModel.isLightFollowsCamera();
-            lightingModel.setLightFollowsCamera(!current);
+        if (renderer != null && renderer.getSceneLighting() != null) {
+            boolean current = renderer.getSceneLighting().isLightFollowsCamera();
+            renderer.getSceneLighting().setLightFollowsCamera(!current);
             updateStatus("Light follows camera: " + (!current ? "ON" : "OFF"));
         }
     }

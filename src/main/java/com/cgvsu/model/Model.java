@@ -63,7 +63,7 @@ public class Model {
         return texturePath;
     }
 
-    public void loadTexture(String texturePath) {
+    public void setTexturePath(String texturePath) {
         if (this.material == null) {
             this.material = new Material();
         }

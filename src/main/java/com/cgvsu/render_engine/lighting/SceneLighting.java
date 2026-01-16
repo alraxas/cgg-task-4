@@ -87,7 +87,6 @@ public class SceneLighting {
         return new javafx.scene.paint.Color(r, g, b1, alpha);
     }
 
-    // Геттеры и сеттеры
     public List<LightSource> getLights() { return lights; }
 
     public void addLight(LightSource light) {
