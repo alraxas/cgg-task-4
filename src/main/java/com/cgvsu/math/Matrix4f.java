@@ -251,8 +251,6 @@ public class Matrix4f {
     }
 
     public static Vector3f transformNormal(Vector3f normal, Matrix4f matrix) {
-        // Для нормалей используется транспонированная обратная матрица,
-        // но для упрощения используем верхнюю левую 3x3 часть
         float x = (float) (normal.getX() * matrix.m00 + normal.getY() * matrix.m10 + normal.getZ() * matrix.m20);
         float y = (float) (normal.getX() * matrix.m01 + normal.getY() * matrix.m11 + normal.getZ() * matrix.m21);
         float z = (float) (normal.getX() * matrix.m02 + normal.getY() * matrix.m12 + normal.getZ() * matrix.m22);
@@ -486,17 +484,14 @@ public class Matrix4f {
     }
 
     public boolean invert() {
-        // Используем алгоритм с вычислением определителя и алгебраических дополнений
         double det = determinant();
 
-        // Если определитель близок к нулю, матрица необратима
         if (Math.abs(det) < 1e-9) {
             return false;
         }
 
         double invDet = 1.0 / det;
 
-        // Вычисляем алгебраические дополнения (cofactors)
         float t00 = (float) (invDet * (m11 * (m22 * m33 - m23 * m32) - m12 * (m21 * m33 - m23 * m31) + m13 * (m21 * m32 - m22 * m31)));
         float t01 = (float) (-invDet * (m01 * (m22 * m33 - m23 * m32) - m02 * (m21 * m33 - m23 * m31) + m03 * (m21 * m32 - m22 * m31)));
         float t02 = (float) (invDet * (m01 * (m12 * m33 - m13 * m32) - m02 * (m11 * m33 - m13 * m31) + m03 * (m11 * m32 - m12 * m31)));
@@ -517,7 +512,6 @@ public class Matrix4f {
         float t32 = (float) (-invDet * (m00 * (m11 * m32 - m12 * m31) - m01 * (m10 * m32 - m12 * m30) + m02 * (m10 * m31 - m11 * m30)));
         float t33 = (float) (invDet * (m00 * (m11 * m22 - m12 * m21) - m01 * (m10 * m22 - m12 * m20) + m02 * (m10 * m21 - m11 * m20)));
 
-        // Обновляем текущую матрицу обратной
         m00 = t00; m01 = t01; m02 = t02; m03 = t03;
         m10 = t10; m11 = t11; m12 = t12; m13 = t13;
         m20 = t20; m21 = t21; m22 = t22; m23 = t23;
@@ -541,16 +535,6 @@ public class Matrix4f {
             throw new ArithmeticException("W компонента слишком мала для деления");
         }
         return new Vector3f(v.getX() / v.getW(), v.getY() / v.getW(), v.getZ() / v.getW());
-    }
-
-    public void set(Matrix4f other) {
-        if (other == null) {
-            throw new IllegalArgumentException("Матрица не может быть null");
-        }
-        this.m00 = other.m00; this.m01 = other.m01; this.m02 = other.m02; this.m03 = other.m03;
-        this.m10 = other.m10; this.m11 = other.m11; this.m12 = other.m12; this.m13 = other.m13;
-        this.m20 = other.m20; this.m21 = other.m21; this.m22 = other.m22; this.m23 = other.m23;
-        this.m30 = other.m30; this.m31 = other.m31; this.m32 = other.m32; this.m33 = other.m33;
     }
 
     @Override
