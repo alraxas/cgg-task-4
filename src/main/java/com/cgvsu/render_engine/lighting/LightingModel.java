@@ -1,9 +1,251 @@
 package com.cgvsu.render_engine.lighting;
 
 import com.cgvsu.math.Vector3f;
+import com.cgvsu.render_engine.Camera;
 import javafx.scene.paint.Color;
 
 public class LightingModel {
+
+    public enum LightingType {
+        FLAT,          // Плоское освещение
+        GOURAUD,       // Освещение по Гуро
+        PHONG,         // Освещение по Фонгу (упрощенное)
+        AMBIENT_DIFFUSE, // Фоновое + рассеянное
+        NONE
+    }
+
+    private LightingType lightingType = LightingType.AMBIENT_DIFFUSE;
+    private Camera camera;
+
+    private float ambientIntensity = 0.2f;    // Фоновое освещение
+    private float diffuseIntensity = 0.7f;    // Рассеянное освещение
+    private float specularIntensity = 0.5f;   // Зеркальное освещение
+    private float shininess = 32.0f;          // Блеск
+
+    private Color ambientColor = Color.WHITE;
+    private Color diffuseColor = Color.WHITE;
+    private Color specularColor = Color.WHITE;
+
+    private boolean lightFollowsCamera = true;
+
+    private Vector3f lightPosition;
+    private Vector3f lightDirection;
+
+    private static final float MIN_LIGHT = 0.1f;
+    private static final float MAX_LIGHT = 1.0f;
+
+    public LightingModel() {
+        this.lightPosition = new Vector3f(0, 10, 10);
+        this.lightDirection = new Vector3f(0, -1, -1);
+        this.lightDirection.normalize();
+    }
+
+    public void setCamera(Camera camera) {
+        this.camera = camera;
+        // Привязываем источник света к позиции камеры
+        if (camera != null && lightFollowsCamera) {
+            this.lightPosition = new Vector3f(
+                    camera.getPosition().getX(),
+                    camera.getPosition().getY(),
+                    camera.getPosition().getZ()
+            );
+            // Направляем свет от камеры на цель
+            this.lightDirection = new Vector3f(
+                    camera.getTarget().getX(),
+                    camera.getTarget().getY(),
+                    camera.getTarget().getZ()
+            );
+            this.lightDirection.sub(camera.getPosition());
+            this.lightDirection.normalize();
+        }
+    }
+
+    public float calculateLightIntensity(Vector3f normal, Vector3f position) {
+        if (lightingType == LightingType.FLAT) {
+            return 1.0f;
+        }
+
+        // Нормализуем нормаль
+        normal = normal.normalize();
+
+        // Рассеянное освещение (Lambert)
+        // Исправлено: свет направлен ОТ источника
+        float diffuse = (float) Math.max(0, lightDirection.scale(-1).dot(normal));
+
+        // Зеркальное освещение (Phong)
+        float specular = 0.0f;
+        if (camera != null && specularIntensity > 0) {
+            // Вектор от точки к камере
+            Vector3f viewDir = new Vector3f(
+                    camera.getPosition().getX(),
+                    camera.getPosition().getY(),
+                    camera.getPosition().getZ()
+            );
+            viewDir.sub(position);
+            viewDir.normalize();
+
+            // Вектор отражения
+            Vector3f reflectDir = reflect(lightDirection.scale(-1), normal);
+            reflectDir.normalize();
+
+            specular = (float) Math.pow(Math.max(0, viewDir.dot(reflectDir)), shininess);
+        }
+
+        // Итоговая интенсивность
+        float intensity = ambientIntensity + diffuseIntensity * diffuse + specularIntensity * specular;
+
+        // Ограничиваем интенсивность
+        return Math.max(MIN_LIGHT, Math.min(MAX_LIGHT, intensity));
+    }
+
+    public Color applyLighting(Color baseColor, float intensity) {
+        // Применяем интенсивность к цвету
+        return Color.color(
+                baseColor.getRed() * intensity,
+                baseColor.getGreen() * intensity,
+                baseColor.getBlue() * intensity,
+                baseColor.getOpacity()
+        );
+    }
+
+    public Color applyFullLighting(Color baseColor, Vector3f normal, Vector3f position) {
+        if (lightingType == LightingType.FLAT) {
+            return baseColor;
+        }
+
+        normal = normal.normalize();
+
+        // Фоновое освещение
+        double ambientR = baseColor.getRed() * ambientIntensity;
+        double ambientG = baseColor.getGreen() * ambientIntensity;
+        double ambientB = baseColor.getBlue() * ambientIntensity;
+
+        // Рассеянное освещение (исправлено направление света)
+        float diffuse = (float) Math.max(0, lightDirection.scale(-1).dot(normal));
+        double diffuseR = baseColor.getRed() * diffuse * diffuseIntensity;
+        double diffuseG = baseColor.getGreen() * diffuse * diffuseIntensity;
+        double diffuseB = baseColor.getBlue() * diffuse * diffuseIntensity;
+
+        // Зеркальное освещение
+        double specularR = 0, specularG = 0, specularB = 0;
+        if (camera != null && specularIntensity > 0) {
+            Vector3f viewDir = new Vector3f(
+                    camera.getPosition().getX(),
+                    camera.getPosition().getY(),
+                    camera.getPosition().getZ()
+            );
+            viewDir.sub(position);
+            viewDir.normalize();
+
+            Vector3f reflectDir = reflect(lightDirection.scale(-1), normal);
+            reflectDir.normalize();
+
+            float specular = (float) Math.pow(Math.max(0, viewDir.dot(reflectDir)), shininess);
+            specularR = specularColor.getRed() * specular * specularIntensity;
+            specularG = specularColor.getGreen() * specular * specularIntensity;
+            specularB = specularColor.getBlue() * specular * specularIntensity;
+        }
+
+        // Суммируем все компоненты
+        double finalR = Math.min(1.0, ambientR + diffuseR + specularR);
+        double finalG = Math.min(1.0, ambientG + diffuseG + specularG);
+        double finalB = Math.min(1.0, ambientB + diffuseB + specularB);
+
+        return new Color(finalR, finalG, finalB, baseColor.getOpacity());
+    }
+
+    // Геттеры и сеттеры
+    public LightingType getLightingType() {
+        return lightingType;
+    }
+
+    public void setLightingType(LightingType type) {
+        this.lightingType = type;
+    }
+
+    public void setAmbientIntensity(float intensity) {
+        this.ambientIntensity = Math.max(0, Math.min(1, intensity));
+    }
+
+    public void setDiffuseIntensity(float intensity) {
+        this.diffuseIntensity = Math.max(0, Math.min(1, intensity));
+    }
+
+    public void setSpecularIntensity(float intensity) {
+        this.specularIntensity = Math.max(0, Math.min(1, intensity));
+    }
+
+    public void setShininess(float shininess) {
+        this.shininess = Math.max(1, shininess);
+    }
+
+    public void setAmbientColor(Color color) {
+        this.ambientColor = color;
+    }
+
+    public void setDiffuseColor(Color color) {
+        this.diffuseColor = color;
+    }
+
+    public void setSpecularColor(Color color) {
+        this.specularColor = color;
+    }
+
+    public void setLightPosition(Vector3f position) {
+        this.lightPosition = position;
+    }
+
+    public void setLightDirection(Vector3f direction) {
+        this.lightDirection = direction.normalize();
+    }
+
+    public boolean isLightFollowsCamera() {
+        return lightFollowsCamera;
+    }
+
+    public void setLightFollowsCamera(boolean lightFollowsCamera) {
+        this.lightFollowsCamera = lightFollowsCamera;
+    }
+
+    public Camera getCamera() {
+        return camera;
+    }
+
+    public float getAmbientIntensity() {
+        return ambientIntensity;
+    }
+
+    public float getDiffuseIntensity() {
+        return diffuseIntensity;
+    }
+
+    public float getSpecularIntensity() {
+        return specularIntensity;
+    }
+
+    public float getShininess() {
+        return shininess;
+    }
+
+    public Color getAmbientColor() {
+        return ambientColor;
+    }
+
+    public Color getDiffuseColor() {
+        return diffuseColor;
+    }
+
+    public Color getSpecularColor() {
+        return specularColor;
+    }
+
+    public Vector3f getLightPosition() {
+        return lightPosition;
+    }
+
+    public Vector3f getLightDirection() {
+        return lightDirection;
+    }
 
     // Чистая функция расчета освещения
     public static Color calculate(

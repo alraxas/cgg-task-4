@@ -32,6 +32,7 @@ public class UnifiedRenderer {
     private ZBuffer wireframeZBuffer;
     private Matrix4f cachedViewProjectionMatrix;
     private Matrix4f cachedNormalMatrix;
+    private Texture currentTexture;
 
     public UnifiedRenderer() {
         this.triangleRasterizer = new TriangleRasterizer();
@@ -52,6 +53,12 @@ public class UnifiedRenderer {
             int width,
             int height) {
 
+        // Проверяем, есть ли модель для рендеринга
+        if (model == null || model.getVertices() == null || model.getVertices().isEmpty()) {
+            graphicsContext.clearRect(0, 0, width, height);
+            return;
+        }
+
         graphicsContext.clearRect(0, 0, width, height);
 
         // Инициализация Z-буферов если нужно
@@ -69,12 +76,6 @@ public class UnifiedRenderer {
         // Оптимизация: если только каркас - рисуем только его
         if (mode == RenderMode.WIREFRAME) {
             renderWireframeOnly(graphicsContext, camera, model, width, height);
-            return;
-        }
-
-        // Оптимизация: если нет Z-буфера для треугольников и нет каркаса
-        if (!renderSettings.isUseZBuffer() && !renderSettings.isDrawWireframe()) {
-            renderWithoutZBuffer(graphicsContext, camera, model, width, height, mode);
             return;
         }
 
@@ -205,7 +206,13 @@ public class UnifiedRenderer {
                 }
             }
 
+            // ВЫБОР РЕЖИМА РЕНДЕРИНГА
             switch (mode) {
+                case SOLID:
+                    renderSolidTriangle(graphicsContext, p1, p2, p3,
+                            transformed1, transformed2, transformed3,
+                            material.getBaseColor());
+                    break;
 
                 case TEXTURED:
                     renderTexturedTriangle(graphicsContext, p1, p2, p3,
@@ -245,25 +252,40 @@ public class UnifiedRenderer {
         }
     }
 
+    // ==================== БАЗОВЫЕ МЕТОДЫ РЕНДЕРИНГА ====================
+
+    /**
+     * Рендеринг сплошного треугольника
+     */
     private void renderSolidTriangle(
             GraphicsContext gc,
             Vector2f p1, Vector2f p2, Vector2f p3,
             Vector3f world1, Vector3f world2, Vector3f world3,
             Color color) {
 
-        if (renderSettings.isUseZBuffer()) {
-            triangleRasterizer.rasterizeTriangleWithZBuffer(
-                    p1, p2, p3,
-                    world1.getZ(), world2.getZ(), world3.getZ(),
-                    gc, triangleZBuffer, color
-            );
-        } else {
-            triangleRasterizer.rasterizeTriangle(
-                    p1, p2, p3, gc, color
+        // УПРОЩЕННАЯ ВЕРСИЯ - используем встроенные возможности JavaFX
+        gc.setFill(color);
+        gc.fillPolygon(
+                new double[]{p1.getX(), p2.getX(), p3.getX()},
+                new double[]{p1.getY(), p2.getY(), p3.getY()},
+                3
+        );
+
+        // Можно добавить обводку для четкости
+        if (renderSettings.getWireframeThickness() > 0) {
+            gc.setStroke(renderSettings.getWireframeColor());
+            gc.setLineWidth(0.5);
+            gc.strokePolygon(
+                    new double[]{p1.getX(), p2.getX(), p3.getX()},
+                    new double[]{p1.getY(), p2.getY(), p3.getY()},
+                    3
             );
         }
     }
 
+    /**
+     * Рендеринг текстурированного треугольника (упрощенная версия)
+     */
     private void renderTexturedTriangle(
             GraphicsContext gc,
             Vector2f p1, Vector2f p2, Vector2f p3,
@@ -271,32 +293,19 @@ public class UnifiedRenderer {
             Material material,
             Vector2f uv1, Vector2f uv2, Vector2f uv3) {
 
-        if (uv1 == null || uv2 == null || uv3 == null) {
-            // Если нет текстурных координат, рисуем сплошным цветом
+        if (uv1 == null || uv2 == null || uv3 == null || !material.hasTexture()) {
+            // Если нет текстурных координат или текстуры, рисуем сплошным цветом
             renderSolidTriangle(gc, p1, p2, p3, world1, world2, world3, material.getBaseColor());
             return;
         }
 
-        if (renderSettings.isUseZBuffer()) {
-            triangleRasterizer.rasterizeTexturedTriangleWithZBuffer(
-                    p1, p2, p3,
-                    world1.getZ(), world2.getZ(), world3.getZ(),
-                    uv1, uv2, uv3,
-                    material.getDiffuseTexture(),
-                    renderSettings.isUseBilinearFiltering(),
-                    gc, triangleZBuffer
-            );
-        } else {
-            triangleRasterizer.rasterizeTexturedTriangle(
-                    p1, p2, p3,
-                    uv1, uv2, uv3,
-                    material.getDiffuseTexture(),
-                    renderSettings.isUseBilinearFiltering(),
-                    gc
-            );
-        }
+        // УПРОЩЕННАЯ ВЕРСИЯ - пока просто сплошной цвет
+        renderSolidTriangle(gc, p1, p2, p3, world1, world2, world3, material.getBaseColor());
     }
 
+    /**
+     * Рендеринг освещенного треугольника (упрощенная версия)
+     */
     private void renderLitTriangle(
             GraphicsContext gc,
             Vector2f p1, Vector2f p2, Vector2f p3,
@@ -306,65 +315,23 @@ public class UnifiedRenderer {
             Material material,
             Vector2f uv1, Vector2f uv2, Vector2f uv3) {
 
-        // Определяем, текстурированный ли треугольник
-        boolean isTextured = renderSettings.isUseTexture() &&
-                material.hasTexture() &&
-                uv1 != null && uv2 != null && uv3 != null;
+        // УПРОЩЕННАЯ ВЕРСИЯ - просто затемняем цвет для эффекта освещения
+        Color baseColor = material.getBaseColor();
+        Color shadedColor;
 
-        if (isTextured) {
+        if (renderSettings.isUseTexture() && material.hasTexture() &&
+                uv1 != null && uv2 != null && uv3 != null) {
             // Текстурированный с освещением
-            if (renderSettings.isUseZBuffer()) {
-                triangleRasterizer.rasterizeLitTexturedTriangleWithZBuffer(
-                        p1, p2, p3,
-                        transformed1.getZ(), transformed2.getZ(), transformed3.getZ(),
-                        world1, world2, world3,
-                        n1, n2, n3,
-                        uv1, uv2, uv3,
-                        material,
-                        sceneLighting,
-                        renderSettings.isSmoothShading(),
-                        renderSettings.isUseBilinearFiltering(),
-                        gc, triangleZBuffer
-                );
-            } else {
-                triangleRasterizer.rasterizeLitTexturedTriangle(
-                        p1, p2, p3,
-                        world1, world2, world3,
-                        n1, n2, n3,
-                        uv1, uv2, uv3,
-                        material,
-                        sceneLighting,
-                        renderSettings.isSmoothShading(),
-                        renderSettings.isUseBilinearFiltering(),
-                        gc
-                );
-            }
+            shadedColor = baseColor.deriveColor(0, 1.0, 0.8, 1.0);
         } else {
             // Сплошной цвет с освещением
-            if (renderSettings.isUseZBuffer()) {
-                triangleRasterizer.rasterizeLitTriangleWithZBuffer(
-                        p1, p2, p3,
-                        transformed1.getZ(), transformed2.getZ(), transformed3.getZ(),
-                        world1, world2, world3,
-                        n1, n2, n3,
-                        material,
-                        sceneLighting,
-                        renderSettings.isSmoothShading(),
-                        gc, triangleZBuffer
-                );
-            } else {
-                triangleRasterizer.rasterizeLitTriangle(
-                        p1, p2, p3,
-                        world1, world2, world3,
-                        n1, n2, n3,
-                        material,
-                        sceneLighting,
-                        renderSettings.isSmoothShading(),
-                        gc
-                );
-            }
+            shadedColor = baseColor.deriveColor(0, 1.0, 0.7, 1.0);
         }
+
+        renderSolidTriangle(gc, p1, p2, p3, transformed1, transformed2, transformed3, shadedColor);
     }
+
+    // ==================== КАРКАСНЫЙ РЕНДЕРИНГ ====================
 
     private void renderWireframeOnly(
             GraphicsContext graphicsContext,
@@ -373,16 +340,8 @@ public class UnifiedRenderer {
             int width,
             int height) {
 
-        wireframeRenderer.renderWireframeWithZBuffer(
-                graphicsContext,
-                camera,
-                model,
-                width,
-                height,
-                renderSettings.getWireframeColor(),
-                renderSettings.getWireframeThickness(),
-                wireframeZBuffer
-        );
+        // Упрощенная версия - используем старый метод
+        renderWireframeSimple(graphicsContext, camera, model, width, height);
     }
 
     private void renderWireframeOverlay(
@@ -392,33 +351,57 @@ public class UnifiedRenderer {
             int width,
             int height) {
 
-        wireframeRenderer.renderWireframeWithZBuffer(
-                graphicsContext,
-                camera,
-                model,
-                width,
-                height,
-                renderSettings.getWireframeColor(),
-                renderSettings.getWireframeThickness(),
-                wireframeZBuffer
-        );
+        // Упрощенная версия - используем старый метод
+        renderWireframeSimple(graphicsContext, camera, model, width, height);
     }
 
-    private void renderWithoutZBuffer(
-            GraphicsContext graphicsContext,
+    /**
+     * Упрощенный рендеринг каркаса
+     */
+    private void renderWireframeSimple(
+            GraphicsContext gc,
             Camera camera,
             Model model,
             int width,
-            int height,
-            RenderMode mode) {
+            int height) {
 
-        // Используем встроенную графику JavaFX для базовой заливки
-        if (mode == RenderMode.SOLID) {
-            graphicsContext.setFill(renderSettings.getSolidColor());
-            // Можно использовать polygon drawing API JavaFX
+        Matrix4f modelMatrix = GraphicConveyor.rotateScaleTranslate();
+        Matrix4f viewMatrix = camera.getViewMatrix();
+        Matrix4f projectionMatrix = camera.getProjectionMatrix();
+
+        Matrix4f modelViewProjectionMatrix = new Matrix4f(modelMatrix);
+        modelViewProjectionMatrix.multiply(viewMatrix);
+        modelViewProjectionMatrix.multiply(projectionMatrix);
+
+        List<Polygon> polygons = model.getPolygons();
+        List<Vector3f> vertices = model.getVertices();
+
+        gc.setStroke(renderSettings.getWireframeColor());
+        gc.setLineWidth(renderSettings.getWireframeThickness());
+
+        for (Polygon polygon : polygons) {
+            List<Integer> vertexIndices = polygon.getVertexIndices();
+            int n = vertexIndices.size();
+
+            if (n < 2) continue;
+
+            // Сохраняем преобразованные точки
+            Point2f[] points = new Point2f[n];
+            for (int i = 0; i < n; i++) {
+                Vector3f vertex = vertices.get(vertexIndices.get(i));
+                Vector3f transformed = multiplyMatrix4ByVector3(modelViewProjectionMatrix, vertex);
+                points[i] = vertexToPoint(transformed, width, height);
+            }
+
+            // Рисуем линии полигона
+            for (int i = 0; i < n; i++) {
+                int next = (i + 1) % n;
+                gc.strokeLine(points[i].x, points[i].y, points[next].x, points[next].y);
+            }
         }
-        // Для остальных режимов нужна своя реализация
     }
+
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     private boolean isBackface(Polygon polygon, List<Vector3f> vertices) {
         if (polygon.getVertexIndices().size() < 3) return false;
@@ -437,13 +420,59 @@ public class UnifiedRenderer {
         return normal.dot(viewDir) > 0;
     }
 
-    // Геттеры и сеттеры
-    public RenderSettings getRenderSettings() { return renderSettings; }
+    // ==================== МЕТОДЫ ДЛЯ РАБОТЫ С ТЕКСТУРАМИ ====================
+
+    /**
+     * Загрузка текстуры
+     */
+    public void loadTexture(String path) {
+        this.currentTexture = TextureManager.getInstance().loadTexture(path);
+    }
+
+    /**
+     * Установка текстуры
+     */
+    public void setTexture(Texture texture) {
+        this.currentTexture = texture;
+    }
+
+    /**
+     * Получение текущей текстуры
+     */
+    public Texture getCurrentTexture() {
+        return currentTexture;
+    }
+
+    /**
+     * Установка текстуры в модель
+     */
+    public void setTextureToModel(Model model, String texturePath) {
+        if (model != null) {
+            if (model.getMaterial() == null) {
+                model.setMaterial(new Material());
+            }
+            if (texturePath != null) {
+                Texture texture = TextureManager.getInstance().loadTexture(texturePath);
+                if (texture != null) {
+                    model.getMaterial().setDiffuseTexture(texture);
+                }
+            }
+        }
+    }
+
+    // ==================== ГЕТТЕРЫ И СЕТТЕРЫ ====================
+
+    public RenderSettings getRenderSettings() {
+        return renderSettings;
+    }
+
     public void setRenderSettings(RenderSettings settings) {
         this.renderSettings = settings;
     }
 
-    public SceneLighting getSceneLighting() { return sceneLighting; }
+    public SceneLighting getSceneLighting() {
+        return sceneLighting;
+    }
 
     public void setSolidColor(Color color) {
         renderSettings.setSolidColor(color);
@@ -454,20 +483,38 @@ public class UnifiedRenderer {
     }
 
     // Методы для быстрого переключения режимов
-    public void enableWireframe() { renderSettings.setDrawWireframe(true); }
-    public void disableWireframe() { renderSettings.setDrawWireframe(false); }
+    public void enableWireframe() {
+        renderSettings.setDrawWireframe(true);
+    }
+
+    public void disableWireframe() {
+        renderSettings.setDrawWireframe(false);
+    }
+
     public void toggleWireframe() {
         renderSettings.setDrawWireframe(!renderSettings.isDrawWireframe());
     }
 
-    public void enableTexture() { renderSettings.setUseTexture(true); }
-    public void disableTexture() { renderSettings.setUseTexture(false); }
+    public void enableTexture() {
+        renderSettings.setUseTexture(true);
+    }
+
+    public void disableTexture() {
+        renderSettings.setUseTexture(false);
+    }
+
     public void toggleTexture() {
         renderSettings.setUseTexture(!renderSettings.isUseTexture());
     }
 
-    public void enableLighting() { renderSettings.setUseLighting(true); }
-    public void disableLighting() { renderSettings.setUseLighting(false); }
+    public void enableLighting() {
+        renderSettings.setUseLighting(true);
+    }
+
+    public void disableLighting() {
+        renderSettings.setUseLighting(false);
+    }
+
     public void toggleLighting() {
         renderSettings.setUseLighting(!renderSettings.isUseLighting());
     }

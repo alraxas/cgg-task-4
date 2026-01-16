@@ -11,11 +11,6 @@ public class Camera {
     private float nearPlane;
     private float farPlane;
 
-    // Для вращения камеры
-    private float pitch = 0.0f;  // Вращение вокруг X
-    private float yaw = 0.0f;    // Вращение вокруг Y
-    private float roll = 0.0f;   // Вращение вокруг Z
-
     public Camera(Vector3f position, Vector3f target,
                   float fov, float aspectRatio,
                   float nearPlane, float farPlane) {
@@ -75,69 +70,21 @@ public class Camera {
         return GraphicConveyor.perspective(fov, aspectRatio, nearPlane, farPlane);
     }
 
-    // Движение камеры относительно ее ориентации
+    // Простое движение камеры
     public void movePosition(Vector3f translation) {
         position.add(translation);
-        // Чтобы камера продолжала смотреть на цель, тоже двигаем цель
         target.add(translation);
     }
 
-    // Вращение камеры (в градусах)
-    public void rotate(float pitchDelta, float yawDelta, float rollDelta) {
-        this.pitch += pitchDelta;
-        this.yaw += yawDelta;
-        this.roll += rollDelta;
-
-        // Ограничиваем pitch чтобы не переворачивать камеру
-        this.pitch = Math.max(-89.0f, Math.min(89.0f, this.pitch));
-
-        // Обновляем target на основе углов вращения
-        updateTargetFromRotation();
-    }
-
-    private void updateTargetFromRotation() {
-        // Преобразуем углы в радианы
-        float pitchRad = (float) Math.toRadians(pitch);
-        float yawRad = (float) Math.toRadians(yaw);
-
-        // Вычисляем новое направление
-        float x = (float) (Math.cos(pitchRad) * Math.sin(yawRad));
-        float y = (float) Math.sin(pitchRad);
-        float z = (float) (Math.cos(pitchRad) * Math.cos(yawRad));
-
-        Vector3f direction = new Vector3f(x, y, z);
-        direction.normalize1();
-
-        // Обновляем цель (на расстоянии 10 единиц от камеры)
-        target.setX(position.getX() + direction.getX() * 10);
-        target.setY(position.getY() + direction.getY() * 10);
-        target.setZ(position.getZ() + direction.getZ() * 10);
-    }
-
-    // Зум камеры (изменение FOV)
+    // Простой зум (изменение позиции камеры)
     public void zoom(float factor) {
-        fov *= factor;
-        fov = Math.max(10.0f, Math.min(120.0f, fov)); // Ограничиваем FOV
-    }
+        Vector3f direction = new Vector3f(
+                position.getX() - target.getX(),
+                position.getY() - target.getY(),
+                position.getZ() - target.getZ()
+        );
 
-    // Орбитальное вращение вокруг цели
-    public void orbit(float deltaYaw, float deltaPitch) {
-        // Вращение камеры вокруг цели
-        float radius = (float) position.distance(target);
-
-        yaw += deltaYaw;
-        pitch += deltaPitch;
-        pitch = Math.max(-89.0f, Math.min(89.0f, pitch));
-
-        float pitchRad = (float) Math.toRadians(pitch);
-        float yawRad = (float) Math.toRadians(yaw);
-
-        float x = target.getX() + radius * (float) (Math.cos(pitchRad) * Math.sin(yawRad));
-        float y = target.getY() + radius * (float) Math.sin(pitchRad);
-        float z = target.getZ() + radius * (float) (Math.cos(pitchRad) * Math.cos(yawRad));
-
-        position.setX(x);
-        position.setY(y);
-        position.setZ(z);
+        direction.scale(factor - 1.0f);
+        position.subtract(direction);
     }
 }

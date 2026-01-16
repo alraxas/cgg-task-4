@@ -12,6 +12,42 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class TriangleRasterizer {
+    public void rasterizeTriangle(
+            Vector2f p1, Vector2f p2, Vector2f p3,
+            Vector3f v1, Vector3f v2, Vector3f v3,
+            GraphicsContext gc, ZBuffer zBuffer, Color color) {
+
+        PixelWriter pw = gc.getPixelWriter();
+
+        int minX = Math.max(0, (int) Math.min(Math.min(p1.getX(), p2.getX()), p3.getX()));
+        int maxX = Math.min((int) gc.getCanvas().getWidth() - 1,
+                (int) Math.max(Math.max(p1.getX(), p2.getX()), p3.getX()));
+        int minY = Math.max(0, (int) Math.min(Math.min(p1.getY(), p2.getY()), p3.getY()));
+        int maxY = Math.min((int) gc.getCanvas().getHeight() - 1,
+                (int) Math.max(Math.max(p1.getY(), p2.getY()), p3.getY()));
+
+        float area = (float) Vector2f.edgeFunction(p1, p2, p3);
+        if (Math.abs(area) < 1e-6) return;
+
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                Vector2f p = new Vector2f(x, y);
+
+                float w1 = (float) (Vector2f.edgeFunction(p2, p3, p) / area);
+                float w2 = (float) (Vector2f.edgeFunction(p3, p1, p) / area);
+                float w3 = (float) (Vector2f.edgeFunction(p1, p2, p) / area);
+
+                if (w1 >= -1e-6 && w2 >= -1e-6 && w3 >= -1e-6) {
+                    float z = (float) (w1 * v1.getZ() + w2 * v2.getZ() + w3 * v3.getZ());
+
+                    if (zBuffer.testAndSet(x, y, z)) {
+                        pw.setColor(x, y, color);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Растеризация треугольника с Z-буфером (базовый метод)
      */

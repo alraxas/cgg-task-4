@@ -4,10 +4,9 @@ import com.cgvsu.math.Vector3f;
 import com.cgvsu.model.Model;
 import com.cgvsu.objreader.ObjReader;
 import com.cgvsu.render_engine.Camera;
-import com.cgvsu.render_engine.RenderManager;
-import com.cgvsu.render_engine.lighting.Material;
+import com.cgvsu.render_engine.RenderEngine;
+import com.cgvsu.render_engine.lighting.LightingModel;
 import com.cgvsu.render_engine.rendering.RenderSettings;
-import com.cgvsu.render_engine.texture.TextureManager;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -28,8 +27,8 @@ import java.nio.file.Path;
 
 public class GuiController {
 
-    final private float TRANSLATION = 2.0F;
-    final private float ROTATION = 2.0F;
+    final private float TRANSLATION = 5.0F;
+    final private float ROTATION = 5.0F;
 
     @FXML
     private AnchorPane anchorPane;
@@ -53,48 +52,49 @@ public class GuiController {
     private Slider scaleSlider;
 
     @FXML
-    private Slider rotationXSlider;
-
-    @FXML
-    private Slider rotationYSlider;
-
-    @FXML
-    private Slider rotationZSlider;
-
-    @FXML
     private Label statusLabel;
 
     private Model mesh = null;
-    private RenderManager renderManager;
+    private RenderEngine renderEngine;
     private Camera camera;
     private Timeline timeline;
 
-    // Трансформации модели
-    private float scale = 1.0f;
-    private float rotateX = 0.0f;
-    private float rotateY = 0.0f;
-    private float rotateZ = 0.0f;
-    private float translateX = 0.0f;
-    private float translateY = 0.0f;
-    private float translateZ = 0.0f;
+    // Настройки рендеринга
+    private RenderSettings renderSettings;
+    private LightingModel lightingModel;
+
+    // Текущий цвет заливки
+    private Color fillColor = Color.LIGHTBLUE;
+
+    // Масштаб модели
+    private float modelScale = 1.0f;
 
     @FXML
     private void initialize() {
-        // Инициализация компонентов интерфейса
+        // Инициализация компонентов
         initUIComponents();
 
-        // Инициализация камеры
+        // Инициализация камеры (старая версия, которая работала)
         camera = new Camera(
-                new Vector3f(0, 10, 50),    // Позиция камеры
-                new Vector3f(0, 0, 0),      // Цель камеры
-                (float) Math.toRadians(60), // Угол обзора 60 градусов
-                1.0f,                       // Соотношение сторон (будет обновлено)
-                0.1f,                       // Ближняя плоскость
-                1000.0f                     // Дальняя плоскость
+                new Vector3f(0, 10, 100),    // Позиция камеры
+                new Vector3f(0, 0, 0),       // Цель камеры
+                1.0F,                         // FOV
+                1.0F,                         // Aspect ratio (будет обновлено)
+                0.01F,                        // Near plane
+                100.0F                        // Far plane
         );
 
-        // Инициализация менеджера рендеринга
-        renderManager = new RenderManager();
+        // Инициализация рендерера
+        renderEngine = new RenderEngine();
+
+        // Инициализация модели освещения
+        lightingModel = new LightingModel();
+        lightingModel.setAmbientIntensity(0.3f);
+        lightingModel.setDiffuseIntensity(0.7f);
+        lightingModel.setSpecularIntensity(0.5f);
+
+        // Настройка рендерера с освещением
+        renderEngine.setLightingModel(lightingModel);
 
         // Настройка обработчиков изменения размеров canvas
         anchorPane.prefWidthProperty().addListener((ov, oldValue, newValue) -> {
@@ -118,11 +118,11 @@ public class GuiController {
         timeline.getKeyFrames().add(frame);
         timeline.play();
 
-        updateStatus("Готов к работе. Загрузите модель.");
+        updateStatus("Ready to load model. Use File -> Load Model");
     }
 
     private void initUIComponents() {
-        // Настройка слайдеров
+        // Настройка слайдера масштаба
         scaleSlider.setMin(0.1);
         scaleSlider.setMax(5.0);
         scaleSlider.setValue(1.0);
@@ -130,27 +130,6 @@ public class GuiController {
         scaleSlider.setShowTickMarks(true);
         scaleSlider.setMajorTickUnit(1.0);
         scaleSlider.setMinorTickCount(4);
-
-        rotationXSlider.setMin(0);
-        rotationXSlider.setMax(360);
-        rotationXSlider.setValue(0);
-        rotationXSlider.setShowTickLabels(true);
-        rotationXSlider.setShowTickMarks(true);
-        rotationXSlider.setMajorTickUnit(90);
-
-        rotationYSlider.setMin(0);
-        rotationYSlider.setMax(360);
-        rotationYSlider.setValue(0);
-        rotationYSlider.setShowTickLabels(true);
-        rotationYSlider.setShowTickMarks(true);
-        rotationYSlider.setMajorTickUnit(90);
-
-        rotationZSlider.setMin(0);
-        rotationZSlider.setMax(360);
-        rotationZSlider.setValue(0);
-        rotationZSlider.setShowTickLabels(true);
-        rotationZSlider.setShowTickMarks(true);
-        rotationZSlider.setMajorTickUnit(90);
 
         // Настройка ColorPicker
         colorPicker.setValue(Color.LIGHTBLUE);
@@ -162,28 +141,28 @@ public class GuiController {
 
         // Обработчики событий UI
         wireframeCheckBox.setOnAction(event -> updateRenderSettings());
-        textureCheckBox.setOnAction(event -> updateRenderSettings());
-        lightingCheckBox.setOnAction(event -> updateRenderSettings());
-        colorPicker.setOnAction(event -> updateRenderSettings());
+        textureCheckBox.setOnAction(event -> {
+            updateRenderSettings();
+            if (textureCheckBox.isSelected()) {
+                updateStatus("Texture mode selected (not implemented in basic version)");
+            }
+        });
+
+        lightingCheckBox.setOnAction(event -> {
+            updateRenderSettings();
+            if (lightingCheckBox.isSelected()) {
+                updateStatus("Lighting mode selected");
+            }
+        });
+
+        colorPicker.setOnAction(event -> {
+            fillColor = colorPicker.getValue();
+            updateStatus("Color changed to: " + fillColor.toString());
+        });
 
         scaleSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            scale = newVal.floatValue();
-            updateStatus(String.format("Масштаб: %.2f", scale));
-        });
-
-        rotationXSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            rotateX = (float) Math.toRadians(newVal.doubleValue());
-            updateStatus(String.format("Вращение X: %.0f°", newVal.doubleValue()));
-        });
-
-        rotationYSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            rotateY = (float) Math.toRadians(newVal.doubleValue());
-            updateStatus(String.format("Вращение Y: %.0f°", newVal.doubleValue()));
-        });
-
-        rotationZSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            rotateZ = (float) Math.toRadians(newVal.doubleValue());
-            updateStatus(String.format("Вращение Z: %.0f°", newVal.doubleValue()));
+            modelScale = newVal.floatValue();
+            updateStatus(String.format("Model scale: %.2f", modelScale));
         });
     }
 
@@ -198,55 +177,76 @@ public class GuiController {
 
         if (mesh != null) {
             try {
-                // Применяем трансформации к модели
-                applyModelTransformations();
+                // Определяем режим рендеринга
+                boolean drawWireframe = wireframeCheckBox.isSelected();
+                boolean useLighting = lightingCheckBox.isSelected();
 
-                // Рендеринг
-                renderManager.render(
-                        canvas.getGraphicsContext2D(),
-                        camera,
-                        mesh,
-                        (int) width,
-                        (int) height
-                );
+                if (drawWireframe) {
+                    // Рендерим только каркас
+                    RenderEngine.renderWireframe(
+                            canvas.getGraphicsContext2D(),
+                            camera,
+                            mesh,
+                            (int) width,
+                            (int) height
+                    );
+                } else if (useLighting) {
+                    // Рендерим с освещением
+                    // Направление света (от камеры к цели)
+                    Vector3f lightDirection = new Vector3f(
+                            camera.getTarget().getX() - camera.getPosition().getX(),
+                            camera.getTarget().getY() - camera.getPosition().getY(),
+                            camera.getTarget().getZ() - camera.getPosition().getZ()
+                    );
+                    lightDirection.normalize1();
+
+                    // Обновляем освещение с текущей камерой
+                    lightingModel.setCamera(camera);
+
+                    // Рендеринг с освещением
+                    renderEngine.renderWithLighting(
+                            canvas.getGraphicsContext2D(),
+                            camera,
+                            mesh,
+                            (int) width,
+                            (int) height,
+                            fillColor,
+                            lightDirection
+                    );
+                } else {
+                    // Рендерим сплошную заливку (базовый режим)
+                    renderEngine.renderSolid(
+                            canvas.getGraphicsContext2D(),
+                            camera,
+                            mesh,
+                            (int) width,
+                            (int) height,
+                            fillColor
+                    );
+                }
+
             } catch (Exception e) {
-                updateStatus("Ошибка рендеринга: " + e.getMessage());
+                updateStatus("Rendering error: " + e.getMessage());
                 e.printStackTrace();
             }
         }
     }
 
-    private void applyModelTransformations() {
-        if (mesh == null) return;
-
-        // Здесь можно применить трансформации к модели перед рендерингом
-        // В текущей архитекции трансформации применяются в GraphicConveyor
-        // во время рендеринга, поэтому здесь просто обновляем настройки
-    }
-
     private void updateRenderSettings() {
-        RenderSettings settings = renderManager.getRenderSettings();
+        // Обновляем статус в зависимости от выбранных опций
+        StringBuilder mode = new StringBuilder("Mode: ");
 
-        settings.setDrawWireframe(wireframeCheckBox.isSelected());
-        settings.setUseTexture(textureCheckBox.isSelected());
-        settings.setUseLighting(lightingCheckBox.isSelected());
-        settings.setSolidColor(colorPicker.getValue());
-
-        updateStatus(getCurrentModeDescription());
-    }
-
-    private String getCurrentModeDescription() {
-        RenderSettings settings = renderManager.getRenderSettings();
-        StringBuilder mode = new StringBuilder("Режим: ");
-
-        if (settings.isDrawWireframe()) mode.append("Каркас ");
-        if (settings.isUseTexture()) mode.append("Текстура ");
-        if (settings.isUseLighting()) mode.append("Освещение ");
-        if (!settings.isDrawWireframe() && !settings.isUseTexture() && !settings.isUseLighting()) {
-            mode.append("Сплошная заливка");
+        if (wireframeCheckBox.isSelected()) {
+            mode.append("Wireframe ");
+        } else if (lightingCheckBox.isSelected()) {
+            mode.append("Solid with Lighting ");
+        } else if (textureCheckBox.isSelected()) {
+            mode.append("Textured ");
+        } else {
+            mode.append("Solid fill ");
         }
 
-        return mode.toString();
+        updateStatus(mode.toString());
     }
 
     private void updateCameraAspectRatio() {
@@ -270,9 +270,7 @@ public class GuiController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("3D Models (*.obj)", "*.obj"));
-        fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("All Files", "*.*"));
-        fileChooser.setTitle("Загрузить 3D модель");
+        fileChooser.setTitle("Load 3D Model");
 
         File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
         if (file == null) {
@@ -286,63 +284,36 @@ public class GuiController {
             // Чтение модели
             mesh = ObjReader.read(fileContent);
 
-            // Автоматическая триангуляция если нужно
-            if (mesh != null && mesh.getPolygons() != null) {
-                int triangleCount = 0;
-                int otherCount = 0;
+            if (mesh != null) {
+                int vertexCount = mesh.getVertices().size();
+                int polygonCount = mesh.getPolygons().size();
 
-                for (var polygon : mesh.getPolygons()) {
-                    if (polygon.getVertexIndices().size() == 3) {
-                        triangleCount++;
-                    } else {
-                        otherCount++;
-                    }
-                }
+                updateStatus(String.format(
+                        "Model loaded: %s\nVertices: %d, Polygons: %d",
+                        file.getName(), vertexCount, polygonCount));
 
-                if (otherCount > 0) {
-                    updateStatus(String.format(
-                            "Модель загружена. Треугольники: %d, Другие полигоны: %d. " +
-                                    "Рекомендуется триангулировать модель.",
-                            triangleCount, otherCount));
-                } else {
-                    updateStatus(String.format(
-                            "Модель загружена. Вершин: %d, Треугольников: %d",
-                            mesh.getVertices().size(), triangleCount));
-                }
-
-                // Создаем материал для модели если его нет
-                if (mesh.getMaterial() == null) {
-                    Material material = new Material();
-                    material.setBaseColor(colorPicker.getValue());
-                    material.setAmbientCoefficient(0.2f);
-                    material.setDiffuseCoefficient(0.7f);
-                    material.setSpecularCoefficient(0.5f);
-                    material.setShininess(32.0f);
-                    mesh.setMaterial(material);
-                }
-
-                // Центрирование модели (опционально)
-                centerModel();
+                // Центрирование камеры на модели
+                centerCameraOnModel();
 
             } else {
-                updateStatus("Ошибка: не удалось загрузить модель");
+                updateStatus("Error: Failed to load model");
                 mesh = null;
             }
 
         } catch (IOException e) {
-            updateStatus("Ошибка чтения файла: " + e.getMessage());
+            updateStatus("File read error: " + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            updateStatus("Ошибка загрузки модели: " + e.getMessage());
+            updateStatus("Model loading error: " + e.getMessage());
             e.printStackTrace();
             mesh = null;
         }
     }
 
-    private void centerModel() {
+    private void centerCameraOnModel() {
         if (mesh == null || mesh.getVertices().isEmpty()) return;
 
-        // Находим центр модели
+        // Находим границы модели
         float minX = Float.MAX_VALUE, maxX = Float.MIN_VALUE;
         float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
         float minZ = Float.MAX_VALUE, maxZ = Float.MIN_VALUE;
@@ -365,62 +336,65 @@ public class GuiController {
         float centerY = (minY + maxY) / 2.0f;
         float centerZ = (minZ + maxZ) / 2.0f;
 
-        // Можем сохранить информацию о центре для использования
+        // Вычисляем размер модели
+        float sizeX = maxX - minX;
+        float sizeY = maxY - minY;
+        float sizeZ = maxZ - minZ;
+        float maxSize = Math.max(sizeX, Math.max(sizeY, sizeZ));
+
+        // Настраиваем камеру
+        float cameraDistance = maxSize * 2.0f; // Расстояние камеры пропорционально размеру модели
+        cameraDistance = Math.max(cameraDistance, 50.0f); // Минимальное расстояние
+
+        camera.setPosition(new Vector3f(0, maxSize * 0.5f, cameraDistance));
+        camera.setTarget(new Vector3f(centerX, centerY, centerZ));
+
         updateStatus(String.format(
-                "Центр модели: (%.2f, %.2f, %.2f). Размер: %.2f x %.2f x %.2f",
-                centerX, centerY, centerZ,
-                maxX - minX, maxY - minY, maxZ - minZ));
+                "Model centered. Size: %.1f x %.1f x %.1f",
+                sizeX, sizeY, sizeZ));
     }
 
     @FXML
     private void onLoadTextureMenuItemClick() {
+        // Базовая реализация загрузки текстуры
+        // В полной версии нужно использовать TextureManager
+        updateStatus("Texture loading not fully implemented in basic version");
+
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif"));
-        fileChooser.setTitle("Загрузить текстуру");
+                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.bmp"));
+        fileChooser.setTitle("Load Texture");
 
         File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
-        if (file == null) {
-            return;
-        }
-
-        try {
-            // Загрузка текстуры через менеджер
-            renderManager.loadTexture(file.getAbsolutePath());
-            textureCheckBox.setSelected(true);
-            updateRenderSettings();
-            updateStatus("Текстура загружена: " + file.getName());
-
-        } catch (Exception e) {
-            updateStatus("Ошибка загрузки текстуры: " + e.getMessage());
-            e.printStackTrace();
+        if (file != null) {
+            updateStatus("Texture selected: " + file.getName() + " (loading not implemented)");
+            // Здесь должен быть код загрузки текстуры через TextureManager
         }
     }
 
     @FXML
     private void onResetViewMenuItemClick() {
-        // Сброс камеры
-        camera = new Camera(
-                new Vector3f(0, 10, 50),
-                new Vector3f(0, 0, 0),
-                (float) Math.toRadians(60),
-                camera.getAspectRatio(),
-                0.1f,
-                1000.0f
-        );
+        // Сброс камеры к виду по умолчанию
+        if (mesh != null) {
+            centerCameraOnModel();
+        } else {
+            camera = new Camera(
+                    new Vector3f(0, 10, 100),
+                    new Vector3f(0, 0, 0),
+                    1.0F,
+                    camera.getAspectRatio(),
+                    0.01F,
+                    100.0F
+            );
+        }
 
-        // Сброс трансформаций модели
-        scale = 1.0f;
-        rotateX = 0.0f;
-        rotateY = 0.0f;
-        rotateZ = 0.0f;
-
+        // Сброс настроек
+        modelScale = 1.0f;
         scaleSlider.setValue(1.0);
-        rotationXSlider.setValue(0);
-        rotationYSlider.setValue(0);
-        rotationZSlider.setValue(0);
+        fillColor = Color.LIGHTBLUE;
+        colorPicker.setValue(fillColor);
 
-        updateStatus("Вид сброшен");
+        updateStatus("View reset");
     }
 
     @FXML
@@ -430,81 +404,162 @@ public class GuiController {
         stage.close();
     }
 
+    @FXML
+    private void onAboutAction() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("About");
+        alert.setHeaderText("3D Model Viewer");
+        alert.setContentText("Simple 3D model viewer for OBJ files\n" +
+                "Features:\n" +
+                "- Load .obj models\n" +
+                "- Wireframe rendering\n" +
+                "- Solid color rendering\n" +
+                "- Basic lighting\n" +
+                "- Camera controls\n" +
+                "\nBasic Version");
+        alert.showAndWait();
+    }
+
     // ============ ОБРАБОТЧИКИ ДВИЖЕНИЯ КАМЕРЫ ============
 
     @FXML
     public void handleCameraForward(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(0, 0, -TRANSLATION));
-        updateStatus("Камера: вперед");
+        // Движение вперед - приближение к цели
+        Vector3f direction = new Vector3f(
+                camera.getTarget().getX() - camera.getPosition().getX(),
+                camera.getTarget().getY() - camera.getPosition().getY(),
+                camera.getTarget().getZ() - camera.getPosition().getZ()
+        );
+        direction.normalize1();
+        direction.scale(TRANSLATION);
+
+        camera.movePosition(direction);
+        updateStatus("Camera: forward");
     }
 
     @FXML
     public void handleCameraBackward(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(0, 0, TRANSLATION));
-        updateStatus("Камера: назад");
+        // Движение назад - отдаление от цели
+        Vector3f direction = new Vector3f(
+                camera.getPosition().getX() - camera.getTarget().getX(),
+                camera.getPosition().getY() - camera.getTarget().getY(),
+                camera.getPosition().getZ() - camera.getTarget().getZ()
+        );
+        direction.normalize1();
+        direction.scale(TRANSLATION);
+
+        camera.movePosition(direction);
+        updateStatus("Camera: backward");
     }
 
     @FXML
     public void handleCameraLeft(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(TRANSLATION, 0, 0));
-        updateStatus("Камера: влево");
+        // Движение влево
+        Vector3f direction = new Vector3f(-TRANSLATION, 0, 0);
+        camera.movePosition(direction);
+        updateStatus("Camera: left");
     }
 
     @FXML
     public void handleCameraRight(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(-TRANSLATION, 0, 0));
-        updateStatus("Камера: вправо");
+        // Движение вправо
+        Vector3f direction = new Vector3f(TRANSLATION, 0, 0);
+        camera.movePosition(direction);
+        updateStatus("Camera: right");
     }
 
     @FXML
     public void handleCameraUp(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(0, TRANSLATION, 0));
-        updateStatus("Камера: вверх");
+        // Движение вверх
+        Vector3f direction = new Vector3f(0, TRANSLATION, 0);
+        camera.movePosition(direction);
+        updateStatus("Camera: up");
     }
 
     @FXML
     public void handleCameraDown(ActionEvent actionEvent) {
-        camera.movePosition(new Vector3f(0, -TRANSLATION, 0));
-        updateStatus("Камера: вниз");
+        // Движение вниз
+        Vector3f direction = new Vector3f(0, -TRANSLATION, 0);
+        camera.movePosition(direction);
+        updateStatus("Camera: down");
     }
 
     @FXML
     public void handleCameraRotateLeft(ActionEvent actionEvent) {
-        camera.rotate(0, -ROTATION, 0);
-        updateStatus("Камера: поворот влево");
+        // Вращение камеры влево вокруг цели
+        orbitCamera(0, -ROTATION);
+        updateStatus("Camera: rotate left");
     }
 
     @FXML
     public void handleCameraRotateRight(ActionEvent actionEvent) {
-        camera.rotate(0, ROTATION, 0);
-        updateStatus("Камера: поворот вправо");
+        // Вращение камеры вправо вокруг цели
+        orbitCamera(0, ROTATION);
+        updateStatus("Camera: rotate right");
     }
 
     @FXML
     public void handleCameraRotateUp(ActionEvent actionEvent) {
-        camera.rotate(-ROTATION, 0, 0);
-        updateStatus("Камера: поворот вверх");
+        // Вращение камеры вверх
+        orbitCamera(-ROTATION, 0);
+        updateStatus("Camera: rotate up");
     }
 
     @FXML
     public void handleCameraRotateDown(ActionEvent actionEvent) {
-        camera.rotate(ROTATION, 0, 0);
-        updateStatus("Камера: поворот вниз");
+        // Вращение камеры вниз
+        orbitCamera(ROTATION, 0);
+        updateStatus("Camera: rotate down");
     }
 
     @FXML
     public void handleZoomIn(ActionEvent actionEvent) {
-        camera.zoom(1.1f);
-        updateStatus("Увеличение");
+        // Увеличение - уменьшаем FOV
+        float currentFov = camera.getFov();
+        camera.setFov(currentFov * 0.9f);
+        updateStatus("Zoom in");
     }
 
     @FXML
     public void handleZoomOut(ActionEvent actionEvent) {
-        camera.zoom(0.9f);
-        updateStatus("Уменьшение");
+        // Уменьшение - увеличиваем FOV
+        float currentFov = camera.getFov();
+        camera.setFov(currentFov * 1.1f);
+        updateStatus("Zoom out");
     }
 
-    // ============ ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ ============
+    // ============ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ============
+
+    private void orbitCamera(float deltaPitch, float deltaYaw) {
+        // Простая орбитальная камера
+        Vector3f position = camera.getPosition();
+        Vector3f target = camera.getTarget();
+
+        // Вычисляем расстояние до цели
+        float dx = position.getX() - target.getX();
+        float dy = position.getY() - target.getY();
+        float dz = position.getZ() - target.getZ();
+
+        float distance = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        // Преобразуем в сферические координаты
+        float pitch = (float) Math.asin(dy / distance);
+        float yaw = (float) Math.atan2(dx, dz);
+
+        // Добавляем изменения
+        pitch += Math.toRadians(deltaPitch);
+        yaw += Math.toRadians(deltaYaw);
+
+        // Ограничиваем pitch
+        pitch = (float) Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, pitch));
+
+        // Преобразуем обратно в декартовы координаты
+        float newX = target.getX() + distance * (float) (Math.sin(yaw) * Math.cos(pitch));
+        float newY = target.getY() + distance * (float) Math.sin(pitch);
+        float newZ = target.getZ() + distance * (float) (Math.cos(yaw) * Math.cos(pitch));
+
+        camera.setPosition(new Vector3f(newX, newY, newZ));
+    }
 
     @FXML
     private void onWireframeOnlyAction() {
@@ -548,32 +603,17 @@ public class GuiController {
 
     @FXML
     private void onClearTextureAction() {
-        renderManager.setTexture(null);
         textureCheckBox.setSelected(false);
         updateRenderSettings();
-        updateStatus("Текстура очищена");
+        updateStatus("Texture cleared");
     }
 
     @FXML
     private void onToggleLightFollowCamera() {
-        boolean current = renderManager.getSceneLighting().isLightFollowsCamera();
-        renderManager.getSceneLighting().setLightFollowsCamera(!current);
-        updateStatus("Освещение следует за камерой: " + (!current ? "ВКЛ" : "ВЫКЛ"));
-    }
-
-    @FXML
-    private void onAboutAction() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("О программе");
-        alert.setHeaderText("3D Viewer");
-        alert.setContentText("Программа для просмотра 3D моделей в формате OBJ\n" +
-                "Реализованы:\n" +
-                "- Загрузка моделей .obj\n" +
-                "- Режимы отображения: каркас, сплошная заливка\n" +
-                "- Текстурирование\n" +
-                "- Освещение\n" +
-                "- Управление камерой\n" +
-                "\nВерсия 1.0");
-        alert.showAndWait();
+        if (lightingModel != null) {
+            boolean current = lightingModel.isLightFollowsCamera();
+            lightingModel.setLightFollowsCamera(!current);
+            updateStatus("Light follows camera: " + (!current ? "ON" : "OFF"));
+        }
     }
 }
