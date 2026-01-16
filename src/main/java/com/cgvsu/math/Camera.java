@@ -1,15 +1,12 @@
 package com.cgvsu.math;
 
-/**
- * Класс для представления камеры с улучшенным управлением
- * Поддерживает управление клавиатурой и мышью
- */
+
 public class Camera {
     private Vector3f position;      // Позиция камеры
     private Vector3f target;         // Точка, на которую смотрит камера
     private Vector3f up;              // Вектор "вверх" для камеры
     
-    // Углы для сферических координат (для управления мышью)
+    // Углы для сферических координат
     private double yaw;              // Угол поворота вокруг оси Y (в радианах)
     private double pitch;            // Угол наклона вверх/вниз (в радианах)
     private double distance;         // Расстояние от камеры до цели
@@ -23,9 +20,6 @@ public class Camera {
     private static final double MAX_PITCH = Math.PI / 2 - 0.1; // Почти 90 градусов
     private static final double MIN_PITCH = -Math.PI / 2 + 0.1; // Почти -90 градусов
 
-    /**
-     * Создает камеру с начальными параметрами
-     */
     public Camera() {
         this.position = new Vector3f(0.0, 0.0, 5.0);
         this.target = new Vector3f(0.0, 0.0, 0.0);
@@ -42,9 +36,6 @@ public class Camera {
         updatePositionFromAngles();
     }
 
-    /**
-     * Создает камеру с заданными параметрами
-     */
     public Camera(Vector3f position, Vector3f target, Vector3f up) {
         this.position = position != null ? position : new Vector3f(0.0, 0.0, 5.0);
         this.target = target != null ? target : new Vector3f(0.0, 0.0, 0.0);
@@ -61,17 +52,12 @@ public class Camera {
         updateAnglesFromPosition();
     }
 
-    /**
-     * Возвращает матрицу вида (view matrix) для векторов-столбцов
-     * @return матрица вида
-     */
+
     public Matrix4f getViewMatrix() {
-        // Вычисляем векторы камеры
         Vector3f forward = target.subtract(position).normalize();
         Vector3f right = forward.multiplyVectorVector(up).normalize();
         Vector3f cameraUp = right.multiplyVectorVector(forward).normalize();
-        
-        // Создаем матрицу вида (look-at matrix) для векторов-столбцов
+
         // Матрица вида: [right.x  right.y  right.z  -dot(right,pos)]
         //               [up.x    up.y    up.z    -dot(up,pos)]
         //               [-forward.x -forward.y -forward.z dot(forward,pos)]
@@ -101,9 +87,6 @@ public class Camera {
         return view;
     }
 
-    /**
-     * Обновляет позицию камеры на основе углов (для управления мышью)
-     */
     private void updatePositionFromAngles() {
         double x = target.getX() + distance * Math.cos(pitch) * Math.sin(yaw);
         double y = target.getY() + distance * Math.sin(pitch);
@@ -111,9 +94,6 @@ public class Camera {
         this.position = new Vector3f(x, y, z);
     }
 
-    /**
-     * Обновляет углы на основе позиции камеры
-     */
     private void updateAnglesFromPosition() {
         Vector3f direction = position.subtract(target);
         this.distance = direction.length();
@@ -127,28 +107,18 @@ public class Camera {
     }
 
     // Управление клавиатурой
-
-    /**
-     * Движение камеры вперед
-     */
     public void moveForward() {
         Vector3f direction = target.subtract(position).normalize();
         position = position.add(direction.scale(moveSpeed));
         target = target.add(direction.scale(moveSpeed));
     }
 
-    /**
-     * Движение камеры назад
-     */
     public void moveBackward() {
         Vector3f direction = position.subtract(target).normalize();
         position = position.add(direction.scale(moveSpeed));
         target = target.add(direction.scale(moveSpeed));
     }
 
-    /**
-     * Движение камеры влево
-     */
     public void moveLeft() {
         Vector3f forward = target.subtract(position).normalize();
         Vector3f right = forward.multiplyVectorVector(up).normalize();
@@ -157,9 +127,6 @@ public class Camera {
         target = target.add(left.scale(moveSpeed));
     }
 
-    /**
-     * Движение камеры вправо
-     */
     public void moveRight() {
         Vector3f forward = target.subtract(position).normalize();
         Vector3f right = forward.multiplyVectorVector(up).normalize();
@@ -167,41 +134,26 @@ public class Camera {
         target = target.add(right.scale(moveSpeed));
     }
 
-    /**
-     * Движение камеры вверх
-     */
     public void moveUp() {
         position = position.add(up.scale(moveSpeed));
         target = target.add(up.scale(moveSpeed));
     }
 
-    /**
-     * Движение камеры вниз
-     */
     public void moveDown() {
         position = position.add(up.scale(-moveSpeed));
         target = target.add(up.scale(-moveSpeed));
     }
 
-    /**
-     * Вращение камеры влево
-     */
     public void rotateLeft() {
         yaw -= rotationSpeed;
         updatePositionFromAngles();
     }
 
-    /**
-     * Вращение камеры вправо
-     */
     public void rotateRight() {
         yaw += rotationSpeed;
         updatePositionFromAngles();
     }
 
-    /**
-     * Вращение камеры вверх
-     */
     public void rotateUp() {
         pitch += rotationSpeed;
         if (pitch > MAX_PITCH) {
@@ -210,9 +162,6 @@ public class Camera {
         updatePositionFromAngles();
     }
 
-    /**
-     * Вращение камеры вниз
-     */
     public void rotateDown() {
         pitch -= rotationSpeed;
         if (pitch < MIN_PITCH) {
@@ -222,12 +171,6 @@ public class Camera {
     }
 
     // Управление мышью
-
-    /**
-     * Обработка движения мыши для вращения камеры
-     * @param deltaX изменение по оси X (в пикселях)
-     * @param deltaY изменение по оси Y (в пикселях)
-     */
     public void processMouseMovement(double deltaX, double deltaY) {
         yaw += deltaX * mouseSensitivity;
         pitch -= deltaY * mouseSensitivity;
@@ -243,10 +186,6 @@ public class Camera {
         updatePositionFromAngles();
     }
 
-    /**
-     * Обработка прокрутки колесика мыши для приближения/отдаления
-     * @param delta изменение прокрутки
-     */
     public void processMouseScroll(double delta) {
         distance += delta * 0.1;
         if (distance < 0.1) {
@@ -255,7 +194,6 @@ public class Camera {
         updatePositionFromAngles();
     }
 
-    // Геттеры и сеттеры
 
     public Vector3f getPosition() {
         return position;
