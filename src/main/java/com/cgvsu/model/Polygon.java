@@ -33,6 +33,8 @@ public class Polygon {
     }
 
     public void setNormalIndices(ArrayList<Integer> normalIndices) {
+        if (normalIndices.size() == 0) return;
+
         if (normalIndices != null && normalIndices.size() < 3) {
             throw new IllegalArgumentException("Normal indices must have at least 3 elements if provided, got: " + normalIndices.size());
         }

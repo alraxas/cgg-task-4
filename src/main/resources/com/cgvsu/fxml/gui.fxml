@@ -1,22 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.Menu?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.input.KeyCodeCombination?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.input.KeyCodeCombination?>
+<?import javafx.geometry.Insets?>
 
 <AnchorPane fx:id="anchorPane" xmlns:fx="http://javafx.com/fxml" fx:controller="com.cgvsu.GuiController">
-    <MenuBar>
+
+    <MenuBar AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <Menu mnemonicParsing="false" text="File">
             <MenuItem mnemonicParsing="false" onAction="#onOpenModelMenuItemClick" text="Load Model">
-            <accelerator>
-                <KeyCodeCombination alt="UP" control="DOWN" meta="UP" shift="UP" shortcut="UP" code="F"/>
-            </accelerator>
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="DOWN" meta="UP" shift="UP" shortcut="UP" code="O"/>
+                </accelerator>
+            </MenuItem>
+            <MenuItem mnemonicParsing="false" onAction="#onLoadTextureMenuItemClick" text="Load Texture">
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="DOWN" meta="UP" shift="UP" shortcut="UP" code="T"/>
+                </accelerator>
+            </MenuItem>
+            <SeparatorMenuItem/>
+            <MenuItem mnemonicParsing="false" onAction="#onExitMenuItemClick" text="Exit">
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="DOWN" meta="UP" shift="UP" shortcut="UP" code="ESCAPE"/>
+                </accelerator>
             </MenuItem>
         </Menu>
-        <Menu mnemonicParsing="false" text="Camera Options">
+
+        <Menu mnemonicParsing="false" text="View">
+            <MenuItem mnemonicParsing="false" onAction="#onWireframeOnlyAction" text="Wireframe Only"/>
+            <MenuItem mnemonicParsing="false" onAction="#onSolidOnlyAction" text="Solid Only"/>
+            <MenuItem mnemonicParsing="false" onAction="#onTexturedOnlyAction" text="Textured Only"/>
+            <MenuItem mnemonicParsing="false" onAction="#onLitOnlyAction" text="Lighting Only"/>
+            <MenuItem mnemonicParsing="false" onAction="#onAllFeaturesAction" text="All Features"/>
+            <SeparatorMenuItem/>
+            <MenuItem mnemonicParsing="false" onAction="#onResetViewMenuItemClick" text="Reset View">
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="DOWN" meta="UP" shift="UP" shortcut="UP" code="R"/>
+                </accelerator>
+            </MenuItem>
+            <MenuItem mnemonicParsing="false" onAction="#onClearTextureAction" text="Clear Texture"/>
+            <MenuItem mnemonicParsing="false" onAction="#onToggleLightFollowCamera" text="Toggle Light Follow Camera"/>
+        </Menu>
+
+        <Menu mnemonicParsing="false" text="Camera">
             <MenuItem mnemonicParsing="false" onAction="#handleCameraForward" text="Forward">
                 <accelerator>
                     <KeyCodeCombination alt="UP" control="UP" meta="UP" shift="UP" shortcut="UP" code="UP"/>
@@ -47,8 +75,105 @@
                     <KeyCodeCombination alt="UP" control="UP" meta="UP" shift="UP" shortcut="UP" code="S"/>
                 </accelerator>
             </MenuItem>
+            <SeparatorMenuItem/>
+            <MenuItem mnemonicParsing="false" onAction="#handleCameraRotateLeft" text="Rotate Left">
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="UP" meta="UP" shift="UP" shortcut="UP" code="A"/>
+                </accelerator>
+            </MenuItem>
+            <MenuItem mnemonicParsing="false" onAction="#handleCameraRotateRight" text="Rotate Right">
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="UP" meta="UP" shift="UP" shortcut="UP" code="D"/>
+                </accelerator>
+            </MenuItem>
+            <MenuItem mnemonicParsing="false" onAction="#handleCameraRotateUp" text="Rotate Up">
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="UP" meta="UP" shift="UP" shortcut="UP" code="E"/>
+                </accelerator>
+            </MenuItem>
+            <MenuItem mnemonicParsing="false" onAction="#handleCameraRotateDown" text="Rotate Down">
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="UP" meta="UP" shift="UP" shortcut="UP" code="Q"/>
+                </accelerator>
+            </MenuItem>
+            <SeparatorMenuItem/>
+            <MenuItem mnemonicParsing="false" onAction="#handleZoomIn" text="Zoom In">
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="UP" meta="UP" shift="UP" shortcut="UP" code="ADD"/>
+                </accelerator>
+            </MenuItem>
+            <MenuItem mnemonicParsing="false" onAction="#handleZoomOut" text="Zoom Out">
+                <accelerator>
+                    <KeyCodeCombination alt="UP" control="UP" meta="UP" shift="UP" shortcut="UP" code="SUBTRACT"/>
+                </accelerator>
+            </MenuItem>
+        </Menu>
+
+        <Menu mnemonicParsing="false" text="Help">
+            <MenuItem mnemonicParsing="false" onAction="#onAboutAction" text="About"/>
         </Menu>
     </MenuBar>
 
-    <Canvas fx:id="canvas" width="1600" height="870" AnchorPane.topAnchor="30.0"/>
+    <!-- Панель инструментов с настройками -->
+    <VBox spacing="5" style="-fx-padding: 5; -fx-background-color: #f0f0f0;"
+          AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="30.0" AnchorPane.bottomAnchor="0.0"
+          prefWidth="250">
+
+        <Label text="Rendering Settings" style="-fx-font-weight: bold; -fx-font-size: 14;"/>
+
+        <CheckBox fx:id="wireframeCheckBox" text="Draw Wireframe" style="-fx-padding: 5 0 5 0;"/>
+        <CheckBox fx:id="textureCheckBox" text="Use Texture" style="-fx-padding: 5 0 5 0;"/>
+        <CheckBox fx:id="lightingCheckBox" text="Use Lighting" style="-fx-padding: 5 0 5 0;"/>
+
+        <Separator style="-fx-padding: 10 0 10 0;"/>
+
+        <Label text="Fill Color:"/>
+        <ColorPicker fx:id="colorPicker" prefWidth="200"/>
+
+        <Separator style="-fx-padding: 10 0 10 0;"/>
+
+        <Label text="Model Scale:"/>
+        <Slider fx:id="scaleSlider" min="0.1" max="5.0" value="1.0"
+                showTickLabels="true" showTickMarks="true" majorTickUnit="1.0" minorTickCount="4"
+                prefWidth="200"/>
+
+        <Label text="Rotation X:"/>
+        <Slider fx:id="rotationXSlider" min="0" max="360" value="0"
+                showTickLabels="true" showTickMarks="true" majorTickUnit="90"
+                prefWidth="200"/>
+
+        <Label text="Rotation Y:"/>
+        <Slider fx:id="rotationYSlider" min="0" max="360" value="0"
+                showTickLabels="true" showTickMarks="true" majorTickUnit="90"
+                prefWidth="200"/>
+
+        <Label text="Rotation Z:"/>
+        <Slider fx:id="rotationZSlider" min="0" max="360" value="0"
+                showTickLabels="true" showTickMarks="true" majorTickUnit="90"
+                prefWidth="200"/>
+
+        <Separator style="-fx-padding: 10 0 10 0;"/>
+
+        <!-- Панель статуса -->
+        <VBox spacing="5" style="-fx-background-color: white; -fx-padding: 10; -fx-border-color: #ccc; -fx-border-width: 1;">
+            <Label text="Status:" style="-fx-font-weight: bold;"/>
+            <Label fx:id="statusLabel" text="Ready to load model"
+                   style="-fx-font-style: italic; -fx-text-fill: #666;"
+                   wrapText="true" maxWidth="230"/>
+        </VBox>
+
+        <!-- Quick Actions -->
+        <Separator style="-fx-padding: 10 0 10 0;"/>
+        <Label text="Quick Actions:" style="-fx-font-weight: bold;"/>
+        <HBox spacing="5">
+            <Button text="Reset All" onAction="#onResetViewMenuItemClick" prefWidth="115"/>
+            <Button text="Clear Tex" onAction="#onClearTextureAction" prefWidth="115"/>
+        </HBox>
+
+    </VBox>
+
+    <!-- Основная область для канваса -->
+    <Canvas fx:id="canvas" AnchorPane.topAnchor="30.0" AnchorPane.leftAnchor="260.0"
+            AnchorPane.rightAnchor="0.0" AnchorPane.bottomAnchor="0.0"/>
+
 </AnchorPane>
