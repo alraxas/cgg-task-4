@@ -74,9 +74,9 @@ public class GuiController {
 
         // Инициализация камеры
         camera = new Camera(
-                new Vector3f(0, 10, 100),    // Позиция камеры
+                new Vector3f(0, 0, 100),    // Позиция камеры
                 new Vector3f(0, 0, 0),       // Цель камеры
-                1.0F,                         // FOV
+                (float) Math.toRadians(60.0),                         // FOV
                 1.0F,                         // Aspect ratio (будет обновлено)
                 0.01F,                        // Near plane
                 100.0F                        // Far plane
@@ -99,7 +99,7 @@ public class GuiController {
         timeline = new Timeline();
         timeline.setCycleCount(Animation.INDEFINITE);
 
-        KeyFrame frame = new KeyFrame(Duration.millis(16), event -> {
+        KeyFrame frame = new KeyFrame(Duration.millis(32), event -> {
             renderFrame();
         });
 

@@ -70,13 +70,11 @@ public class Camera {
         return GraphicConveyor.perspective(fov, aspectRatio, nearPlane, farPlane);
     }
 
-    // Простое движение камеры
     public void movePosition(Vector3f translation) {
         position.add(translation);
         target.add(translation);
     }
 
-    // Простой зум (изменение позиции камеры)
     public void zoom(float factor) {
         Vector3f direction = new Vector3f(
                 position.getX() - target.getX(),

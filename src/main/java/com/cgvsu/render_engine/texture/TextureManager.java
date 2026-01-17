@@ -59,7 +59,6 @@ public class TextureManager {
 
     public Texture loadTexture(String path, boolean useBilinearDefault) {
         Texture texture = loadTexture(path);
-        // Можно добавить флаг для текстуры, если нужно
         return texture;
     }
 
@@ -68,7 +67,6 @@ public class TextureManager {
         javafx.scene.canvas.Canvas canvas = new javafx.scene.canvas.Canvas(size, size);
         javafx.scene.canvas.GraphicsContext gc = canvas.getGraphicsContext2D();
 
-        // Рисуем шахматную доску
         int tileSize = size / 8;
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {

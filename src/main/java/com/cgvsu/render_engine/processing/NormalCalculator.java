@@ -24,10 +24,8 @@ public class NormalCalculator {
             Vector3f v1 = vertices.get(vertexIndices.get(0));
             Vector3f v2 = vertices.get(vertexIndices.get(1));
             Vector3f v3 = vertices.get(vertexIndices.get(2));
-            //TODO: change method to math package
-            Vector3f normal = calculatePolygonNormal(v1, v2, v3);
+            Vector3f normal = Vector3f.calculatePolygonNormal(v1, v2, v3);
 
-            // Добавляем нормаль к каждой вершине полигона
             for (Integer vertexIndex : vertexIndices) {
                 Vector3f currentNormal = newNormals.get(vertexIndex);
                 currentNormal.setX(currentNormal.getX() + normal.getX());
@@ -51,21 +49,5 @@ public class NormalCalculator {
                 polygon.getNormalIndices().add(vertexIndex);
             }
         }
-    }
-
-    private static Vector3f calculatePolygonNormal(Vector3f v1, Vector3f v2, Vector3f v3) {
-        Vector3f edge1 = new Vector3f(
-                v2.getX() - v1.getX(),
-                v2.getY() - v1.getY(),
-                v2.getZ() - v1.getZ()
-        );
-
-        Vector3f edge2 = new Vector3f(
-                v3.getX() - v1.getX(),
-                v3.getY() - v1.getY(),
-                v3.getZ() - v1.getZ()
-        );
-
-        return edge1.multiplyVectorVector(edge2);
     }
 }

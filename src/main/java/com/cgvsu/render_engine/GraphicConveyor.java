@@ -12,13 +12,6 @@ public class GraphicConveyor {
             float rotateX, float rotateY, float rotateZ,
             float translateX, float translateY, float translateZ) {
 
-//        Matrix4f scaleMatrix = new Matrix4f(new float[]{
-//                scaleX, 0, 0, 0,
-//                0, scaleY, 0, 0,
-//                0, 0, scaleZ, 0,
-//                0, 0, 0, 1
-//        });
-
         Matrix4f scaleMatrix = createScaleMatrix(scaleX, scaleY, scaleZ);
 
         // Матрицы вращения
@@ -26,16 +19,6 @@ public class GraphicConveyor {
 
         // Матрица переноса
         Matrix4f translationMatrix = createTranslationMatrix(translateX, translateY, translateZ);
-
-        // Матрицы вращения (упрощенно, для примера)
-        // TODO: Реализовать полноценные матрицы вращения
-
-//        Matrix4f translateMatrix = new Matrix4f(new float[]{
-//                1, 0, 0, translateX,
-//                0, 1, 0, translateY,
-//                0, 0, 1, translateZ,
-//                0, 0, 0, 1
-//        });
 
         // Комбинируем: сначала масштаб, потом перенос
         Matrix4f result = new Matrix4f(scaleMatrix);
@@ -115,7 +98,6 @@ public class GraphicConveyor {
         Matrix4f rotationY = createRotationYMatrix(angleY);
         Matrix4f rotationZ = createRotationZMatrix(angleZ);
 
-        // Порядок вращения: Z -> Y -> X (часто используется в 3D графике)
         Matrix4f result = new Matrix4f(rotationZ);
         result.multiply(rotationY);
         result.multiply(rotationX);
@@ -152,54 +134,10 @@ public class GraphicConveyor {
         float sin = (float) Math.sin(angle);
 
         return new Matrix4f(new float[]{
-                cos, -sin, 0, 0,
-                sin, cos, 0, 0,
+                cos, sin, 0, 0,
+                -sin, cos, 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1
         });
-    }
-
-    public static Vector4f toHomogeneousCoordinates(Vector3f vector, float w) {
-        return new Vector4f(vector.getX(), vector.getY(), vector.getZ(), w);
-    }
-
-    public static Vector3f fromHomogeneousCoordinates(Vector4f vector) {
-        if (Math.abs(vector.getW()) < 1e-6f) {
-            return new Vector3f(vector.getX(), vector.getY(), vector.getZ());
-        }
-        return new Vector3f(
-                vector.getX() / vector.getW(),
-                vector.getY() / vector.getW(),
-                vector.getZ() / vector.getW()
-        );
-    }
-
-    public static javax.vecmath.Point2f vertexToPoint(
-            Vector3f vertex,
-            int width,
-            int height) {
-
-        // Преобразуем из NDC (Normalized Device Coordinates) в экранные координаты
-        float x = (float) ((vertex.getX() + 1.0f) * width * 0.5f);
-        float y = (float) ((1.0f - vertex.getY()) * height * 0.5f); // Инвертируем Y
-
-        return new javax.vecmath.Point2f(x, y);
-    }
-
-    public static Color vectorToColor(Vector3f colorVector) {
-        return Color.color(
-                Math.max(0, Math.min(1, colorVector.getX())),
-                Math.max(0, Math.min(1, colorVector.getY())),
-                Math.max(0, Math.min(1, colorVector.getZ()))
-        );
-    }
-
-    // Преобразование цвета из Color в Vector3f
-    public static Vector3f colorToVector(Color color) {
-        return new Vector3f(
-                (float) color.getRed(),
-                (float) color.getGreen(),
-                (float) color.getBlue()
-        );
     }
 }

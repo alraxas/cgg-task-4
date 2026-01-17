@@ -13,7 +13,7 @@ public class RenderSettings {
     private boolean useZBuffer = true;
     private boolean backfaceCulling = true;
     private boolean smoothShading = true;
-    private boolean useBilinearFiltering = true;
+    private boolean BilinearFiltering = true;
 
     public boolean isDrawWireframe() { return drawWireframe; }
     public void setDrawWireframe(boolean drawWireframe) { this.drawWireframe = drawWireframe; }
@@ -62,11 +62,11 @@ public class RenderSettings {
         this.smoothShading = smoothShading;
     }
 
-    public boolean isUseBilinearFiltering() {
-        return useBilinearFiltering;
+    public boolean isBilinearFiltering() {
+        return BilinearFiltering;
     }
-    public void setUseBilinearFiltering(boolean useBilinearFiltering) {
-        this.useBilinearFiltering = useBilinearFiltering;
+    public void setBilinearFiltering(boolean bilinearFiltering) {
+        this.BilinearFiltering = bilinearFiltering;
     }
 
     public RenderMode getCurrentMode() {
@@ -108,7 +108,7 @@ public class RenderSettings {
         copy.useZBuffer = this.useZBuffer;
         copy.backfaceCulling = this.backfaceCulling;
         copy.smoothShading = this.smoothShading;
-        copy.useBilinearFiltering = this.useBilinearFiltering;
+        copy.BilinearFiltering = this.BilinearFiltering;
         return copy;
     }
 }

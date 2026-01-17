@@ -62,6 +62,6 @@ public class Material {
     }
 
     public boolean hasTexture() {
-        return diffuseTexture != null;
+        return diffuseTexture != null && diffuseTexture.isValid();
     }
 }

@@ -29,11 +29,28 @@ public class Texture {
         this(new Image("file:" + path));
     }
 
+    public Color getColor(int x, int y) {
+        if (pixelReader == null) {
+            return null;
+        }
+
+
+        x = Math.max(0, Math.min(width - 1, x));
+//        x = width - x - 1;
+        y = Math.max(0, Math.min(height - 1, y));
+
+        try {
+            return pixelReader.getColor(x, y);
+        } catch (Exception e) {
+            System.err.println("Ошибка чтения цвета текстуры: " + x + ", " + y);
+            return null;
+        }
+    }
+
     public Color getColor(float u, float v) {
         return getColor(u, v, false);
     }
 
-    // Метод с выбором фильтрации
     public Color getColor(float u, float v, boolean useBilinear) {
         if (useBilinear) {
             return getColorBilinear(u, v);
@@ -41,46 +58,42 @@ public class Texture {
         return getColorNearest(u, v);
     }
 
-    // Метод ближайшего соседа (быстрее)
+
     private Color getColorNearest(float u, float v) {
-        // Обработка координат (wrap mode)
         u = u - (float) Math.floor(u);
         v = v - (float) Math.floor(v);
 
-        // Конвертируем в координаты пикселей
-        int x = Math.min((int) (u * width), width - 1);
+        int x = Math.min((int) ((1 - u) * width), width - 1);
+//        int x = Math.min((int) (u * width), width - 1);
         int y = Math.min((int) ((1 - v) * height), height - 1);
+//        int y = Math.min((int) ((v) * height), height - 1);
 
-        // Ограничение на случай ошибок округления
+
         x = Math.max(0, Math.min(x, width - 1));
         y = Math.max(0, Math.min(y, height - 1));
 
         return pixelReader.getColor(x, y);
     }
 
-    // Билинейная фильтрация
     public Color getColorBilinear(float u, float v) {
-        // Wrap coordinates
         u = u - (float) Math.floor(u);
         v = v - (float) Math.floor(v);
 
-        // Convert to pixel coordinates with sub-pixel precision
-        float x = u * (width - 1);
+//        float x = u * (width - 1);
+        float x = (1 - u) * (width - 1);
         float y = (1 - v) * (height - 1);
+//        float y = (v) * (height - 1);
 
-        // Get four surrounding pixels
         int x1 = (int) Math.floor(x);
         int y1 = (int) Math.floor(y);
         int x2 = Math.min(x1 + 1, width - 1);
         int y2 = Math.min(y1 + 1, height - 1);
 
-        // Calculate interpolation factors
         float dx = x - x1;
         float dy = y - y1;
         float dx1 = 1 - dx;
         float dy1 = 1 - dy;
 
-        // Get colors of four pixels
         Color c00 = pixelReader.getColor(x1, y1);
         Color c10 = pixelReader.getColor(x2, y1);
         Color c01 = pixelReader.getColor(x1, y2);
@@ -102,7 +115,7 @@ public class Texture {
                 c01.getBlue() * dx1 * dy +
                 c11.getBlue() * dx * dy;
 
-        // Alpha (if needed)
+        // Alpha
         double a = c00.getOpacity();
 
         return new Color(

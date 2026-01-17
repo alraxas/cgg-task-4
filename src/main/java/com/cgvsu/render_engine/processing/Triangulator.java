@@ -28,7 +28,7 @@ public class Triangulator {
         return result;
     }
 
-    private void triangulatePolygon(Polygon polygon, Model result) {
+    void triangulatePolygon(Polygon polygon, Model result) {
         ArrayList<Integer> vertices = polygon.getVertexIndices();
         ArrayList<Integer> textures = polygon.getTextureVertexIndices();
         ArrayList<Integer> normals = polygon.getNormalIndices();
@@ -67,7 +67,7 @@ public class Triangulator {
         }
     }
 
-    private Polygon copyPolygon(Polygon p) {
+    Polygon copyPolygon(Polygon p) {
         Polygon copy = new Polygon();
         copy.getVertexIndices().addAll(p.getVertexIndices());
 
